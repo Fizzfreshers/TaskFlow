@@ -12,5 +12,6 @@ yarn-error.log*
 .pnpm-debug.log*
 .vscode/ # If you use VS Code and want to ignore workspace settings
 coverage/
+Thumbs.db
 *.log
 *.sqlite
