@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const validator = require('validator');
+
+
 
 // function to generate JWT
 const generateToken = (id) => {
@@ -11,6 +14,22 @@ const generateToken = (id) => {
 // register user
 router.post('/register', async (req, res) => {
     const { username, email, password } = req.body;
+    if (!password) {
+        return res.status(400).json({ message: 'Password is required' });
+    }
+
+    // check for password strength, using the Validator lib
+    if (!validator.isStrongPassword(password, {
+        minLength: 8,
+        minLowercase: 1,
+        minUppercase: 1,
+        minNumbers: 1,
+        minSymbols: 1
+    })) {
+        return res.status(400).json({
+            message: 'Password is not strong enough. It must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
+        });
+    }
     try {
         const userExists = await User.findOne({ email });
         if (userExists) {
