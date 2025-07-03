@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
     const [isRegister, setIsRegister] = useState(false);
-    const [username, setUsername] = useState('');
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { login, register } = useContext(AuthContext);
@@ -14,7 +14,7 @@ const Auth = () => {
         e.preventDefault();
         try {
             if (isRegister) {
-                await register(username, email, password);
+                await register(name, email, password);
             } else {
                 await login(email, password);
             }
@@ -32,9 +32,9 @@ const Auth = () => {
                 {isRegister && (
                     <input
                         type="text"
-                        placeholder="Username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="Name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
                         required
                     />
                 )}

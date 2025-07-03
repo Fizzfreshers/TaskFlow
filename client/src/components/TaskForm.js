@@ -88,7 +88,7 @@ const TaskForm = ({ onTaskCreated, currentTask, onTaskUpdated }) => {
             <select multiple value={assignedTo} onChange={(e) => setAssignedTo(Array.from(e.target.selectedOptions, option => option.value))}>
                 <option value="">Assign to (select multiple)</option>
                 {users.map(u => (
-                    <option key={u._id} value={u._id}>{u.username}</option>
+                    <option key={u._id} value={u._id}>{u.name}</option>
                 ))}
             </select>
             <select value={team} onChange={(e) => setTeam(e.target.value)}>

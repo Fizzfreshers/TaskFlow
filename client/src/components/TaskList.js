@@ -85,7 +85,7 @@ const TaskList = () => {
                             <p>{task.description}</p>
                             <p>Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'N/A'}</p>
                             <p>Status: {task.status}</p>
-                            <p>Assigned To: {task.assignedTo.map(u => u.username).join(', ')}</p>
+                            <p>Assigned To: {task.assignedTo.map(u => u.name).join(', ')}</p>
                             <p>Team: {task.team ? task.team.name : 'N/A'}</p>
                             <button onClick={() => handleDelete(task._id)}>Delete</button>
                             <select

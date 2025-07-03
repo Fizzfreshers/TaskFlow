@@ -17,7 +17,7 @@ const Header = () => {
             <nav>
                 {user ? (
                     <>
-                        <span>Welcome, {user.username}</span>
+                        <span>Welcome, {user.name}</span>
                         <button onClick={handleLogout} style={{ marginLeft: '1rem' }}>Logout</button>
                     </>
                 ) : (
