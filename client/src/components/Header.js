@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import NotificationBell from './NotificationBell';
 
 const Header = () => {
     const { user, logout } = useContext(AuthContext);
@@ -18,6 +19,7 @@ const Header = () => {
                 {user ? (
                     <>
                         <span>Welcome, {user.name}</span>
+                        <NotificationBell />
                         <button onClick={handleLogout} style={{ marginLeft: '1rem' }}>Logout</button>
                     </>
                 ) : (

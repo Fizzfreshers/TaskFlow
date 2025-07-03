@@ -1,9 +1,12 @@
 import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import { SocketProvider } from './context/SocketContext';
+
 import Auth from './pages/Auth';
-import Dashboard from './pages/Dashboard'; // Create this later
-import Header from './components/Header'; // Create this later
+import Dashboard from './pages/Dashboard';
+import Header from './components/Header'; 
 
 const App = () => {
     const { user, loading } = useContext(AuthContext);
