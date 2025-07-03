@@ -13,9 +13,9 @@ router.get('/', protect, async (req, res) => {
                 { team: { $in: req.user.teams } }
             ]
         })
-        .populate('assignedTo', 'username email')
+        .populate('assignedTo', 'name email')
         .populate('team', 'name')
-        .populate('createdBy', 'username email');
+        .populate('createdBy', 'name email');
 
         res.json(tasks);
     } catch (error) {
@@ -46,9 +46,9 @@ router.post('/', protect, async (req, res) => {
 router.get('/:id', protect, async (req, res) => {
     try {
         const task = await Task.findById(req.params.id)
-            .populate('assignedTo', 'username email')
+            .populate('assignedTo', 'name email')
             .populate('team', 'name')
-            .populate('createdBy', 'username email');
+            .populate('createdBy', 'name email');
 
         if (!task) {
             return res.status(404).json({ message: 'Task not found' });
