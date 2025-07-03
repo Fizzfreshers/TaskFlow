@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const Task = require('../models/Task');
-const Notification = require('../models/Notification');
+const Notification = require('../models/Notifications');
 
 // get all tasks for the authenticated user or their teams
 router.get('/', protect, async (req, res) => {
