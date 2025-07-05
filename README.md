@@ -1,2 +1,2 @@
 # TaskFlow
-A Collaborative Task Manager
+A Collaborative Task Manager.
