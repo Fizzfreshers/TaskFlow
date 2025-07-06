@@ -3,6 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import TaskForm from '../components/TaskForm';
 import TaskList from '../components/TaskList';
 import TeamList from '../components/TeamList';
+import TaskCalendar from '../components/TaskCalendar';
 
 const Dashboard = () => {
     const { user } = useContext(AuthContext);
@@ -22,9 +23,11 @@ const Dashboard = () => {
     };
     return (
         <div style={{ padding: '20px' }}>
-            <h2>Welcome, {user ? user.name : 'Guest'}!</h2>
+            <h2>Welcome, {user ? user.username : 'Guest'}!</h2>
+            <TeamList key={refreshTeams} onTeamCreatedOrJoined={handleTeamAction} />
             <TaskForm onTaskCreated={handleTaskCreated} />
-            <TaskList key={refreshTasks} /> {/* Use key to force re-render/re-fetch */}
+            <TaskList key={refreshTasks} />
+            <TaskCalendar key={refreshTasks} /> {/* to re-fetch tasks if tasks change */}
         </div>
     );
 };
