@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
+const { admin } = require('../middleware/roleMiddleware');
 const Team = require('../models/Team');
 const User = require('../models/User'); // Need User model to update user's teams array
 
@@ -17,7 +18,7 @@ router.get('/', protect, async (req, res) => {
 });
 
 // Create a new team
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, admin, async (req, res) => {
     const { name } = req.body;
     try {
         const teamExists = await Team.findOne({ name });
