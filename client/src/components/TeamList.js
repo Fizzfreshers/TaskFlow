@@ -108,6 +108,11 @@ const TeamList = ({ onTeamCreatedOrJoined }) => {
                                         ) : (
                                             <span style={{ marginLeft: '5px', color: 'gray', fontSize: '0.8em' }}>○ Offline</span>
                                         )}
+                                        {team.leader && team.leader === member._id && ( // check if member is the leader
+                                            <span style={{ marginLeft: '8px', background: '#ffc107', color: '#212529', padding: '2px 6px', borderRadius: '10px', fontSize: '0.75em', fontWeight: 'bold' }}>
+                                                Team Leader
+                                            </span>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
