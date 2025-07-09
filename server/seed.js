@@ -5,7 +5,7 @@ const User = require('./models/User');
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@taskflow.com';
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'superadmin';
+const ADMIN_NAME = process.env.ADMIN_NAME || 'superadmin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'We1come@123';
 
 const seedAdmin = async () => {
@@ -22,7 +22,7 @@ const seedAdmin = async () => {
 
         // create the admin user
         const adminUser = new User({
-            username: ADMIN_USERNAME,
+            name: ADMIN_NAME,
             email: ADMIN_EMAIL,
             password: ADMIN_PASSWORD,
             role: 'admin',
