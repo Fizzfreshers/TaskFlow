@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import TaskIcon from '@mui/icons-material/Task';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 const Header = () => {
     const { user, logout } = useContext(AuthContext);
@@ -24,7 +25,23 @@ const Header = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     {user ? (
                         <>
+                            <Typography sx={{ display: { xs: 'none', sm: 'block' } }}>
+                                Welcome, {user.name}
+                            </Typography>
+
+                            {user.role === 'admin' && (
+                                <Button
+                                    color="inherit"
+                                    component={RouterLink}
+                                    to="/admin"
+                                    startIcon={<AdminPanelSettingsIcon />}
+                                >
+                                    Admin Panel
+                                </Button>
+                            )}
+
                             <NotificationBell />
+
                             <Button color="inherit" onClick={handleLogout}>
                                 Logout
                             </Button>
