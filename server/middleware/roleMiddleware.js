@@ -6,7 +6,8 @@ const admin = (req, res, next) => {
     }
 };
 
-const teamLeader = (req, res, next) => {
+// check for Team Leader or Admin role
+const teamLeaderOrAdmin = (req, res, next) => {
     if (req.user && (req.user.role === 'team-leader' || req.user.role === 'admin')) {
         next();
     } else {
@@ -14,4 +15,4 @@ const teamLeader = (req, res, next) => {
     }
 };
 
-module.exports = { admin, teamLeader };
+module.exports = { admin, teamLeaderOrAdmin };
