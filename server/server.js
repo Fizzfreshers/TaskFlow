@@ -43,6 +43,7 @@ io.on('connection', (socket) => {
     // When a user logs in, they send their userId
     socket.on('userOnline', async (userId) => {
         if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+            socket.join(userId);
             await User.findByIdAndUpdate(userId, { isOnline: true });
             socket.userId = userId; // Store userId on socket for disconnect
             // Broadcast to all connected clients that a user came online
