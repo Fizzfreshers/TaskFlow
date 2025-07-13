@@ -3,14 +3,13 @@ const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const Notification = require('../models/Notifications');
 
-// Get all notifications for the authenticated user
 router.get('/', protect, async (req, res) => {
     try {
         const notifications = await Notification.find({ recipient: req.user._id })
-                                                .sort({ createdAt: -1 }) // Newest first
-                                                .populate('sender', 'username')
+                                                .sort({ createdAt: -1 })
+                                                .populate('sender', 'name') 
                                                 .populate('taskId', 'title')
-                                                .limit(20); // Limit number of notifications
+                                                .limit(20);
         res.json(notifications);
     } catch (error) {
         res.status(500).json({ message: error.message });
