@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { Box, Typography, List, Card, CardContent, CardActions, Button, Select, MenuItem, FormControl, InputLabel, CircularProgress } from '@mui/material';
 
 const TaskList = ({ onTaskClick }) => {
     const [tasks, setTasks] = useState([]);
@@ -62,51 +63,53 @@ const TaskList = ({ onTaskClick }) => {
     if (loading) return <div>Loading tasks...</div>;
     if (error) return <div>Error: {error}</div>;
 
-    return (
-        <div>
-            <h3>My Tasks</h3>
-            {/* --- Filter Dropdown --- */}
-            <div style={{ marginBottom: '1rem' }}>
-                <label>Filter by Team: </label>
-                <select value={filterByTeam} onChange={(e) => setFilterByTeam(e.target.value)}>
-                    <option value="">All Teams</option>
-                    {allTeams.map(team => (
-                        <option key={team._id} value={team._id}>{team.name}</option>
-                    ))}
-                </select>
-            </div>
+    if (loading) return <CircularProgress />;
+    if (error) return <Typography color="error">{error}</Typography>;
 
-            {filteredTasks.length === 0 ? (
-                <p>No tasks found for the selected filter.</p>
-            ) : (
-                <ul>
-                    {filteredTasks.map((task) => (
-                        <li key={task._id} onClick={() => onTaskClick(task)} style={{ border: '1px solid #ccc', padding: '10px', margin: '10px 0', cursor: 'pointer' }}>
-                            <h4>{task.title}</h4>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <p>Status: {task.status}</p>
-                                    <p>Teams: {task.teams.map(t => t.name).join(', ')}</p>
-                                </div>
-                                <div>
-                                    <select
+    return (
+        <Box>
+            <Typography variant="h5" gutterBottom>My Tasks</Typography>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Filter by Team</InputLabel>
+                <Select value={filterByTeam} label="Filter by Team" onChange={(e) => setFilterByTeam(e.target.value)}>
+                    <MenuItem value=""><em>All Teams</em></MenuItem>
+                    {allTeams.map(team => <MenuItem key={team._id} value={team._id}>{team.name}</MenuItem>)}
+                </Select>
+            </FormControl>
+
+            <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
+                {filteredTasks.length === 0 ? (
+                    <Typography>No tasks found for the selected filter.</Typography>
+                ) : (
+                    filteredTasks.map((task) => (
+                        <Card key={task._id} sx={{ mb: 2, cursor: 'pointer' }} onClick={() => onTaskClick(task)}>
+                            <CardContent>
+                                <Typography variant="h6">{task.title}</Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Teams: {task.teams.map(t => t.name).join(', ')}
+                                </Typography>
+                            </CardContent>
+                            <CardActions sx={{ justifyContent: 'space-between' }}>
+                                <FormControl size="small" sx={{ m: 1, minWidth: 120 }}>
+                                    <InputLabel>Status</InputLabel>
+                                    <Select
                                         value={task.status}
+                                        label="Status"
                                         onChange={(e) => handleUpdateStatus(task._id, e.target.value, e)}
                                         onClick={(e) => e.stopPropagation()}
-                                        style={{ marginRight: '10px' }}
                                     >
-                                        <option value="pending">Pending</option>
-                                        <option value="in-progress">In Progress</option>
-                                        <option value="completed">Completed</option>
-                                    </select>
-                                    <button onClick={(e) => handleDelete(task._id, e)}>Delete</button>
-                                </div>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </div>
+                                        <MenuItem value="pending">Pending</MenuItem>
+                                        <MenuItem value="in-progress">In Progress</MenuItem>
+                                        <MenuItem value="completed">Completed</MenuItem>
+                                    </Select>
+                                </FormControl>
+                                <Button size="small" color="error" onClick={(e) => handleDelete(task._id, e)}>Delete</Button>
+                            </CardActions>
+                        </Card>
+                    ))
+                )}
+            </List>
+        </Box>
     );
 };
 
