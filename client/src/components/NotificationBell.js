@@ -2,86 +2,91 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { SocketContext } from '../context/SocketContext';
+import { Badge, IconButton, Menu, MenuItem, ListItemText, Typography, Divider } from '@mui/material';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 
 const NotificationBell = () => {
     const [notifications, setNotifications] = useState([]);
-    const [unreadCount, setUnreadCount] = useState(0);
-    const [showDropdown, setShowDropdown] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
     const { token } = useContext(AuthContext);
     const socket = useContext(SocketContext);
 
+    const unreadCount = notifications.filter(n => !n.read).length;
+    const open = Boolean(anchorEl);
+
     const fetchNotifications = async () => {
+        if (!token) return;
         try {
             const config = { headers: { Authorization: `Bearer ${token}` } };
             const { data } = await axios.get('http://localhost:5000/api/notifications', config);
             setNotifications(data);
-            setUnreadCount(data.filter(n => !n.read).length);
         } catch (error) {
             console.error('Error fetching notifications:', error);
         }
     };
 
     useEffect(() => {
-        if (token) {
-            fetchNotifications();
-        }
+        fetchNotifications();
     }, [token]);
 
-    // Listen for real-time notifications
     useEffect(() => {
         if (socket) {
             socket.on('newNotification', (newNotif) => {
-                console.log("New real-time notification:", newNotif);
-                setNotifications(prev => [newNotif, ...prev]); // Add to top
-                setUnreadCount(prev => prev + 1);
+                setNotifications(prev => [newNotif, ...prev]);
             });
-
-            return () => {
-                socket.off('newNotification'); // Clean up listener
-            };
+            return () => socket.off('newNotification');
         }
     }, [socket]);
 
-    const handleMarkAsRead = async (id) => {
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleMarkAsRead = async (id, e) => {
+        e.stopPropagation();
         try {
             const config = { headers: { Authorization: `Bearer ${token}` } };
             await axios.put(`http://localhost:5000/api/notifications/${id}/read`, {}, config);
             setNotifications(notifications.map(n => n._id === id ? { ...n, read: true } : n));
-            setUnreadCount(prev => prev - 1);
         } catch (error) {
             console.error('Failed to mark notification as read:', error);
         }
     };
 
     return (
-        <div style={{ position: 'relative', display: 'inline-block', marginLeft: '1rem' }}>
-            <button onClick={() => setShowDropdown(!showDropdown)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.5em' }}>
-                🔔
-                {unreadCount > 0 && (
-                    <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'red', color: 'white', borderRadius: '50%', padding: '0 6px', fontSize: '0.7em' }}>
-                        {unreadCount}
-                    </span>
+        <div>
+            <IconButton color="inherit" onClick={handleClick}>
+                <Badge badgeContent={unreadCount} color="error">
+                    <NotificationsIcon />
+                </Badge>
+            </IconButton>
+            <Menu
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                PaperProps={{ style: { maxHeight: 400, width: '35ch' } }}
+            >
+                {notifications.length === 0 ? (
+                    <MenuItem onClick={handleClose}>No new notifications</MenuItem>
+                ) : (
+                    notifications.map(notif => (
+                        <MenuItem
+                            key={notif._id}
+                            onClick={() => handleMarkAsRead(notif._id)}
+                            sx={{ backgroundColor: notif.read ? 'transparent' : 'action.hover', whiteSpace: 'normal' }}
+                        >
+                            <ListItemText
+                                primary={notif.message}
+                                secondary={new Date(notif.createdAt).toLocaleString()}
+                            />
+                        </MenuItem>
+                    ))
                 )}
-            </button>
-            {showDropdown && (
-                <div style={{ position: 'absolute', right: 0, background: 'white', border: '1px solid #ccc', borderRadius: '5px', width: '300px', maxHeight: '400px', overflowY: 'auto', zIndex: 10 }}>
-                    {notifications.length === 0 ? (
-                        <p style={{ padding: '10px' }}>No notifications.</p>
-                    ) : (
-                        <ul>
-                            {notifications.map(notif => (
-                                <li key={notif._id} style={{ padding: '10px', borderBottom: '1px solid #eee', background: notif.read ? '#f9f9f9' : 'white' }}>
-                                    <p>{notif.message}</p>
-                                    <small>{new Date(notif.createdAt).toLocaleString()}</small>
-                                    {!notif.read && (
-                                        <button onClick={() => handleMarkAsRead(notif._id)} style={{ marginLeft: '10px', fontSize: '0.8em' }}>Mark as Read</button>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-            )}
+            </Menu>
         </div>
     );
 };
