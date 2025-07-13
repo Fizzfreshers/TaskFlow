@@ -14,7 +14,7 @@ const Auth = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(''); // Clear previous errors
+        setError('');
         try {
             if (isRegister) {
                 await register(name, email, password);
