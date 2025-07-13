@@ -4,6 +4,7 @@ import moment from 'moment';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { Paper, Typography } from '@mui/material';
 
 const localizer = momentLocalizer(moment);
 
@@ -44,19 +45,17 @@ const TaskCalendar = () => {
     };
 
     return (
-        <div style={{ height: '700px', margin: '20px 0' }}>
-            <h3>Task Calendar</h3>
+        <Paper sx={{ height: '70vh', p: 2, mt: 3 }}>
+            <Typography variant="h5" gutterBottom>Task Calendar</Typography>
             <Calendar
                 localizer={localizer}
                 events={events}
                 startAccessor="start"
                 endAccessor="end"
-                style={{ height: '100%' }}
+                style={{ height: 'calc(100% - 48px)' }}
                 onSelectEvent={handleSelectEvent}
-                views={['month', 'week', 'day']}
-                defaultView="month"
             />
-        </div>
+        </Paper>
     );
 };
 
