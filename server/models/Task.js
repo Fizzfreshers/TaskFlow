@@ -5,8 +5,8 @@ const TaskSchema = new mongoose.Schema({
     description: { type: String },
     deadline: { type: Date },
     status: { type: String, enum: ['pending', 'in-progress', 'completed'], default: 'pending' },
-    assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // array of users (gets assigned to multiple users)
-    team: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' }, // team this task belongs to
+    assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], 
+    teams: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }],
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true });
 
