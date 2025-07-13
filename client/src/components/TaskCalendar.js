@@ -4,22 +4,23 @@ import moment from 'moment';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { Paper, Typography } from '@mui/material';
+import { Paper, Typography, Box, CircularProgress } from '@mui/material';
 
 const localizer = momentLocalizer(moment);
 
-const TaskCalendar = () => {
+const TaskCalendar = ({ onTaskClick }) => {
     const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
     const { token } = useContext(AuthContext);
 
     const fetchTasksForCalendar = async () => {
+        if (!token) return;
+        setLoading(true);
         try {
             const config = { headers: { Authorization: `Bearer ${token}` } };
             const { data: tasks } = await axios.get('http://localhost:5000/api/tasks', config);
-
-            // transform tasks into calendar events format
             const calendarEvents = tasks
-                .filter(task => task.deadline) // only tasks with deadlines
+                .filter(task => task.deadline)
                 .map(task => ({
                     id: task._id,
                     title: task.title,
@@ -31,22 +32,26 @@ const TaskCalendar = () => {
             setEvents(calendarEvents);
         } catch (error) {
             console.error('Error fetching tasks for calendar:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        if (token) {
-            fetchTasksForCalendar();
-        }
+        fetchTasksForCalendar();
     }, [token]);
 
     const handleSelectEvent = (event) => {
-        alert(`Task: ${event.title}\nStatus: ${event.resource.status}`);
+        if (event.resource) {
+            onTaskClick(event.resource);
+        }
     };
+    
+    if (loading) return <Box display="flex" justifyContent="center" my={4}><CircularProgress /></Box>;
 
     return (
-        <Paper sx={{ height: '70vh', p: 2, mt: 3 }}>
-            <Typography variant="h5" gutterBottom>Task Calendar</Typography>
+        <Paper sx={{ height: '50vh', p: 2, mt: 3 }}>
+            <Typography variant="h5" gutterBottom>Calendar</Typography>
             <Calendar
                 localizer={localizer}
                 events={events}
