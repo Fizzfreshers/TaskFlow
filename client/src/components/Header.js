@@ -2,7 +2,8 @@ import React, { useContext } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
-import { AppBar, Toolbar, Typography, Button, Box, Link } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import TaskIcon from '@mui/icons-material/Task';
 
 const Header = () => {
     const { user, logout } = useContext(AuthContext);
@@ -16,13 +17,13 @@ const Header = () => {
     return (
         <AppBar position="static">
             <Toolbar>
+                <TaskIcon sx={{ mr: 2 }} />
                 <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                     TaskFlow
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     {user ? (
                         <>
-                            <Typography>Welcome, {user.name}</Typography>
                             <NotificationBell />
                             <Button color="inherit" onClick={handleLogout}>
                                 Logout
