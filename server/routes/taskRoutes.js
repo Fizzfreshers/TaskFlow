@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose')
 const { protect } = require('../middleware/authMiddleware');
 const Task = require('../models/Task');
 const Notification = require('../models/Notifications');
