@@ -2,6 +2,9 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { SocketContext } from '../context/SocketContext';
+import { Box, Typography, List, ListItem, ListItemText, ListItemAvatar, Avatar, Chip, Divider, TextField, Button } from '@mui/material';
+import GroupIcon from '@mui/icons-material/Group';
+import OnlinePredictionIcon from '@mui/icons-material/OnlinePrediction';
 
 const TeamList = ({ onTeamAction }) => {
     const [teams, setTeams] = useState([]);
@@ -73,44 +76,47 @@ const TeamList = ({ onTeamAction }) => {
     };
 
     return (
-        <div style={{ border: '1px solid #ccc', padding: '20px', margin: '20px 0' }}>
-            <h3>Your Teams</h3>
-            {renderAdminControls()}
-            
-            {/* The rest of the TeamList rendering logic will go here. */}
-            {/* You'll need to add buttons for "Add Member", "Set Leader" etc. */}
-            {/* and conditionally render them based on user.role */}
-            {teams.length === 0 ? (
-                <p>You are not part of any teams yet.</p>
-            ) : (
-                <ul>
-                    {teams.map((team) => (
-                        <li key={team._id} style={{ border: '1px solid #eee', padding: '10px', margin: '10px 0' }}>
-                            <h4>{team.name}</h4>
-                            <p>Leader: {team.leader ? team.leader.name : 'None'}</p>
-                            <p>Members:</p>
-                            <ul>
-                                {team.members.map(member => (
-                                    <li key={member._id} style={{ display: 'flex', alignItems: 'center' }}>
-                                        {member.name}
-                                        {member.isOnline ? (
-                                            <span style={{ marginLeft: '5px', color: 'green', fontSize: '0.8em' }}>● Online</span>
-                                        ) : (
-                                            <span style={{ marginLeft: '5px', color: 'gray', fontSize: '0.8em' }}>○ Offline</span>
-                                        )}
-                                        {team.leader && team.leader._id === member._id && (
-                                            <span style={{ marginLeft: '8px', background: '#ffc107', color: '#212529', padding: '2px 6px', borderRadius: '10px', fontSize: '0.75em', fontWeight: 'bold' }}>
-                                                Team Leader
-                                            </span>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
-                        </li>
-                    ))}
-                </ul>
+        <Box>
+            <Typography variant="h5" gutterBottom>Your Teams</Typography>
+            { user.role === 'admin' && (
+                <Box component="form" onSubmit={handleCreateTeam} sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                    <TextField size="small" label="New Team Name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} required />
+                    <Button type="submit" variant="contained">Create</Button>
+                </Box>
             )}
-        </div>
+            
+            <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
+                {teams.map((team) => (
+                    <React.Fragment key={team._id}>
+                        <ListItem alignItems="flex-start">
+                            <ListItemAvatar>
+                                <Avatar><GroupIcon /></Avatar>
+                            </ListItemAvatar>
+                            <ListItemText
+                                primary={team.name}
+                                secondary={
+                                    <Box component="span" sx={{ display: 'flex', flexDirection: 'column' }}>
+                                        <Typography component="span" variant="body2">
+                                            Leader: {team.leader ? team.leader.name : 'None'}
+                                        </Typography>
+                                        {team.members.map(member => (
+                                            <Box key={member._id} component="span" sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                                                <OnlinePredictionIcon sx={{ mr: 0.5, fontSize: '1rem' }} color={member.isOnline ? 'success' : 'disabled'} />
+                                                <Typography variant="caption">{member.name}</Typography>
+                                                {team.leader && team.leader._id === member._id && (
+                                                    <Chip label="Leader" color="primary" size="small" sx={{ ml: 1 }}/>
+                                                )}
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                }
+                            />
+                        </ListItem>
+                        <Divider variant="inset" component="li" />
+                    </React.Fragment>
+                ))}
+            </List>
+        </Box>
     );
 };
 
