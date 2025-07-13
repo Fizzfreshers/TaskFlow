@@ -1,11 +1,26 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import TaskForm from '../components/TaskForm';
 import TaskList from '../components/TaskList';
 import TeamList from '../components/TeamList';
 import TaskCalendar from '../components/TaskCalendar';
-import Modal from '../components/Modal';
+import Modal from '@mui/material/Modal'; // Using MUI's Modal
+import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
 import TaskDetail from '../components/TaskDetail';
+
+// Style for the modal content
+const modalStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 600,
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+};
 
 const Dashboard = () => {
     const { user } = useContext(AuthContext);
@@ -15,28 +30,49 @@ const Dashboard = () => {
     const handleAction = () => {
         setRefreshTrigger(prev => prev + 1);
     };
-    
+
+    const handleTaskClick = (task) => {
+        setSelectedTask(task);
+    };
+
     const handleModalClose = () => {
         setSelectedTask(null);
-        handleAction(); 
-    }
+    };
 
     return (
-        <div style={{ padding: '20px' }}>
-            <h2>Welcome, {user ? user.name : 'Guest'}!</h2>
-            {/* You can arrange these components in a better layout, e.g., using a grid */}
-            <TeamList key={`teams-${refreshTrigger}`} onTeamAction={handleAction} />
-            <TaskForm key={`form-${refreshTrigger}`} onTaskCreated={handleAction} onTaskUpdated={handleAction}/>
-            <TaskList key={`list-${refreshTrigger}`} onTaskClick={setSelectedTask} />
-            <TaskCalendar key={`calendar-${refreshTrigger}`} />
-            
-            {/* --- Render the modal if a task is selected --- */}
-            {selectedTask && (
-                <Modal onClose={handleModalClose}>
+        <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h4" gutterBottom>
+                Welcome, {user ? user.name : 'Guest'}!
+            </Typography>
+            <Grid container spacing={3}>
+                {/* Left Column: Teams & Calendar */}
+                <Grid item xs={12} md={4}>
+                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <TeamList key={`teams-${refreshTrigger}`} onTeamAction={handleAction} />
+                        <TaskCalendar key={`calendar-${refreshTrigger}`} onTaskClick={handleTaskClick} />
+                    </Paper>
+                </Grid>
+                
+                {/* Right Column: Tasks List */}
+                <Grid item xs={12} md={8}>
+                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+                        <TaskList key={`list-${refreshTrigger}`} onTaskClick={handleTaskClick} />
+                    </Paper>
+                </Grid>
+            </Grid>
+
+            {/* Task Detail Modal */}
+            <Modal
+                open={!!selectedTask}
+                onClose={handleModalClose}
+                aria-labelledby="task-detail-title"
+                aria-describedby="task-detail-description"
+            >
+                <Box sx={modalStyle}>
                     <TaskDetail task={selectedTask} />
-                </Modal>
-            )}
-        </div>
+                </Box>
+            </Modal>
+        </Box>
     );
 };
 
