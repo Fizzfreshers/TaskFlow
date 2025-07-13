@@ -1,7 +1,8 @@
 import React, { useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
+import { AppBar, Toolbar, Typography, Button, Box, Link } from '@mui/material';
 
 const Header = () => {
     const { user, logout } = useContext(AuthContext);
@@ -9,26 +10,32 @@ const Header = () => {
 
     const handleLogout = () => {
         logout();
-        navigate('/auth'); // Redirect to auth page after logout
+        navigate('/auth');
     };
 
     return (
-        <header style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: '#f0f0f0' }}>
-            <h1>TaskFlow</h1>
-            <nav>
-                {user ? (
-                    <>
-                        <span>Welcome, {user.name}</span>
-                        <NotificationBell />
-                        <button onClick={handleLogout} style={{ marginLeft: '1rem' }}>Logout</button>
-                    </>
-                ) : (
-                    <>
-                        <Link to="/auth">Login / Register</Link>
-                    </>
-                )}
-            </nav>
-        </header>
+        <AppBar position="static">
+            <Toolbar>
+                <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                    TaskFlow
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    {user ? (
+                        <>
+                            <Typography>Welcome, {user.name}</Typography>
+                            <NotificationBell />
+                            <Button color="inherit" onClick={handleLogout}>
+                                Logout
+                            </Button>
+                        </>
+                    ) : (
+                        <Button color="inherit" component={RouterLink} to="/auth">
+                            Login / Register
+                        </Button>
+                    )}
+                </Box>
+            </Toolbar>
+        </AppBar>
     );
 };
 
