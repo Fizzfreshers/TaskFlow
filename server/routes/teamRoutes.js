@@ -1,26 +1,35 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const { admin } = require('../middleware/roleMiddleware');
+const { admin, teamLeaderOrAdmin } = require('../middleware/roleMiddleware');
 const Team = require('../models/Team');
-const User = require('../models/User'); // Need User model to update user's teams array
+const User = require('../models/User');
 
-// Get all teams current user is a member of
+// Get all teams (for admin view) or teams the user is a member of
 router.get('/', protect, async (req, res) => {
     try {
-        const teams = await Team.find({ members: req.user._id })
-                                .populate('members', 'name isOnline') // Populate members and their online status
-                                .populate('owner', 'name');
+        let query = {};
+        // If the user is not an admin, only show teams they are a member of
+        if (req.user.role !== 'admin') {
+            query = { members: req.user._id };
+        }
+        const teams = await Team.find(query)
+                                .populate('members', 'name email isOnline role')
+                                .populate('owner', 'name email')
+                                .populate('leader', 'name email');
         res.json(teams);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-// Create a new team
+// Create a new team (Admin Only)
 router.post('/', protect, admin, async (req, res) => {
     const { name } = req.body;
     try {
+        if (!name) {
+            return res.status(400).json({ message: 'Team name is required' });
+        }
         const teamExists = await Team.findOne({ name });
         if (teamExists) {
             return res.status(400).json({ message: 'Team name already taken' });
@@ -28,65 +37,140 @@ router.post('/', protect, admin, async (req, res) => {
 
         const team = new Team({
             name,
-            members: [req.user._id], // Creator is the first member
-            owner: req.user._id,
+            owner: req.user._id, // The admin who creates the team is the owner
         });
         const createdTeam = await team.save();
-
-        // Add team to creator's user document
-        await User.findByIdAndUpdate(req.user._id, { $push: { teams: createdTeam._id } });
-
         res.status(201).json(createdTeam);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 });
 
-// Join a team (by team ID)
-router.post('/:id/join', protect, async (req, res) => {
+// Delete a team (Admin Only)
+router.delete('/:id', protect, admin, async (req, res) => {
     try {
         const team = await Team.findById(req.params.id);
-
         if (!team) {
             return res.status(404).json({ message: 'Team not found' });
         }
-        if (team.members.includes(req.user._id)) {
-            return res.status(400).json({ message: 'Already a member of this team' });
-        }
 
-        team.members.push(req.user._id);
-        await team.save();
+        // Remove the team from all users' teams array
+        await User.updateMany(
+            { _id: { $in: team.members } },
+            { $pull: { teams: team._id } }
+        );
 
-        // Add team to user's document
-        await User.findByIdAndUpdate(req.user._id, { $push: { teams: team._id } });
-
-        res.json({ message: 'Joined team successfully', team });
+        await team.deleteOne();
+        res.json({ message: 'Team and all member associations removed' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-// Leave a team
-router.post('/:id/leave', protect, async (req, res) => {
+// Add a member to a team (Admin or Team Leader)
+router.post('/:teamId/members', protect, teamLeaderOrAdmin, async (req, res) => {
+    const { userId } = req.body;
+    const { teamId } = req.params;
     try {
-        const team = await Team.findById(req.params.id);
+        const team = await Team.findById(teamId);
+        const user = await User.findById(userId);
 
-        if (!team) {
-            return res.status(404).json({ message: 'Team not found' });
+        if (!team || !user) {
+            return res.status(404).json({ message: 'Team or User not found' });
         }
 
-        // Prevent owner from leaving without assigning new owner or deleting team
-        if (team.owner.equals(req.user._id)) {
-            return res.status(400).json({ message: 'Owners cannot leave a team without reassigning ownership or deleting it.' });
+        // Authorization: Only admin or the specific team's leader can add members
+        if (req.user.role !== 'admin' && (!team.leader || team.leader.toString() !== req.user._id.toString())) {
+            return res.status(403).json({ message: 'Only the admin or team leader can add members.' });
         }
 
-        team.members = team.members.filter(memberId => !memberId.equals(req.user._id));
+        if (team.members.includes(userId)) {
+            return res.status(400).json({ message: 'User is already in this team' });
+        }
+
+        team.members.push(userId);
+        user.teams.push(teamId);
+
         await team.save();
+        await user.save();
 
-        // Remove team from user's document
-        await User.findByIdAndUpdate(req.user._id, { $pull: { teams: team._id } });
+        res.json(team);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
-        res.json({ message: 'Left team successfully', team });
+// Remove a member from a team (Admin or Team Leader)
+router.delete('/:teamId/members/:memberId', protect, teamLeaderOrAdmin, async (req, res) => {
+    const { teamId, memberId } = req.params;
+    try {
+        const team = await Team.findById(teamId);
+        const user = await User.findById(memberId);
+
+        if (!team || !user) {
+            return res.status(404).json({ message: 'Team or User not found' });
+        }
+
+        // Authorization: Only admin or the specific team's leader can remove members
+        if (req.user.role !== 'admin' && (!team.leader || team.leader.toString() !== req.user._id.toString())) {
+            return res.status(403).json({ message: 'Only the admin or team leader can remove members.' });
+        }
+
+        // Prevent removing the team owner or the team leader themselves (unless by admin)
+        if (team.owner.toString() === memberId) {
+            return res.status(400).json({ message: 'Cannot remove the team owner.' });
+        }
+        if (req.user.role !== 'admin' && team.leader && team.leader.toString() === memberId) {
+            return res.status(400).json({ message: 'Team leader cannot be removed by another leader.' });
+        }
+
+        team.members.pull(memberId);
+        user.teams.pull(teamId);
+
+        // If the removed user was the leader, unset the leader
+        if (team.leader && team.leader.toString() === memberId) {
+            team.leader = null;
+            user.role = 'user';
+        }
+
+        await team.save();
+        await user.save();
+
+        res.json({ message: 'Member removed successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Assign a team leader
+router.put('/:teamId/leader', protect, admin, async (req, res) => {
+    const { userId } = req.body;
+    const { teamId } = req.params;
+    try {
+        const team = await Team.findById(teamId);
+        const user = await User.findById(userId);
+
+        if (!team || !user) {
+            return res.status(404).json({ message: 'Team or User not found' });
+        }
+
+        if (!team.members.includes(userId)) {
+            return res.status(400).json({ message: 'User must be a member of the team to become a leader.' });
+        }
+
+        // demote the old leader if one exists
+        if (team.leader) {
+            await User.findByIdAndUpdate(team.leader, { role: 'user' });
+        }
+
+        // promote the new leader
+        team.leader = userId;
+        user.role = 'team-leader';
+
+        await team.save();
+        await user.save();
+
+        res.json(team);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
