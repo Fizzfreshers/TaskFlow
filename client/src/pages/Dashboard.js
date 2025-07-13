@@ -1,33 +1,41 @@
-import React, { useContext,useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import TaskForm from '../components/TaskForm';
 import TaskList from '../components/TaskList';
 import TeamList from '../components/TeamList';
 import TaskCalendar from '../components/TaskCalendar';
+import Modal from '../components/Modal';
+import TaskDetail from '../components/TaskDetail';
 
 const Dashboard = () => {
     const { user } = useContext(AuthContext);
-    const [refreshTasks, setRefreshTasks] = useState(0); // to trigger task list refresh
-    const [refreshTeams, setRefreshTeams] = useState(0); // State to trigger team list refresh
-    const handleTaskCreated = (newTask) => {
-        // You might want to add newTask to the tasks state directly, or
-        // simplest for now is to trigger a re-fetch of all tasks.
-        setRefreshTasks(prev => prev + 1);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [selectedTask, setSelectedTask] = useState(null);
+
+    const handleAction = () => {
+        setRefreshTrigger(prev => prev + 1);
     };
-    const handleTaskUpdated = (updatedTask) => {
-        setRefreshTasks(prev => prev + 1);
+    
+    const handleModalClose = () => {
+        setSelectedTask(null);
+        handleAction(); 
     }
-    const handleTeamAction = () => {
-        setRefreshTeams(prev => prev + 1); // Trigger refresh of teams
-        setRefreshTasks(prev => prev + 1); // Also refresh tasks as team membership changes
-    };
+
     return (
         <div style={{ padding: '20px' }}>
-            <h2>Welcome, {user ? user.username : 'Guest'}!</h2>
-            <TeamList key={refreshTeams} onTeamCreatedOrJoined={handleTeamAction} />
-            <TaskForm onTaskCreated={handleTaskCreated} />
-            <TaskList key={refreshTasks} />
-            <TaskCalendar key={refreshTasks} /> {/* to re-fetch tasks if tasks change */}
+            <h2>Welcome, {user ? user.name : 'Guest'}!</h2>
+            {/* You can arrange these components in a better layout, e.g., using a grid */}
+            <TeamList key={`teams-${refreshTrigger}`} onTeamAction={handleAction} />
+            <TaskForm key={`form-${refreshTrigger}`} onTaskCreated={handleAction} onTaskUpdated={handleAction}/>
+            <TaskList key={`list-${refreshTrigger}`} onTaskClick={setSelectedTask} />
+            <TaskCalendar key={`calendar-${refreshTrigger}`} />
+            
+            {/* --- Render the modal if a task is selected --- */}
+            {selectedTask && (
+                <Modal onClose={handleModalClose}>
+                    <TaskDetail task={selectedTask} />
+                </Modal>
+            )}
         </div>
     );
 };
