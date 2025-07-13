@@ -4,6 +4,7 @@ import { AuthContext } from './context/AuthContext';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Header from './components/Header';
+import AdminDashboard from './pages/AdminDashboard'; 
 import { Container, CircularProgress, Box, CssBaseline } from '@mui/material';
 
 const App = () => {
@@ -19,12 +20,14 @@ const App = () => {
 
     return (
         <Router>
-            <CssBaseline /> {/* MUI's style normalizer */}
+            <CssBaseline />
             <Header />
             <Container maxWidth="xl" component="main" sx={{ mt: 4, mb: 4 }}>
                 <Routes>
                     <Route path="/auth" element={!user ? <Auth /> : <Navigate to="/dashboard" />} />
                     <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/auth" />} />
+                    {/* ADD THIS PROTECTED ADMIN ROUTE */}
+                    <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/dashboard" />} />
                     <Route path="/" element={<Navigate to="/dashboard" />} />
                 </Routes>
             </Container>
