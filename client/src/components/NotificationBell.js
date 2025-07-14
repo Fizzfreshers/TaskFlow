@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { SocketContext } from '../context/SocketContext';
-import { Badge, IconButton, Menu, MenuItem, ListItemText, Typography, Divider } from '@mui/material';
+import { Badge, IconButton, Menu, MenuItem, ListItemText, Typography } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 
 const NotificationBell = () => {
@@ -17,8 +17,7 @@ const NotificationBell = () => {
     const fetchNotifications = async () => {
         if (!token) return;
         try {
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            const { data } = await axios.get('http://localhost:5000/api/notifications', config);
+            const { data } = await axios.get('/api/notifications', { headers: { Authorization: `Bearer ${token}` } });
             setNotifications(data);
         } catch (error) {
             console.error('Error fetching notifications:', error);
@@ -47,13 +46,16 @@ const NotificationBell = () => {
     };
 
     const handleMarkAsRead = async (id, e) => {
-        e.stopPropagation();
-        try {
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            await axios.put(`http://localhost:5000/api/notifications/${id}/read`, {}, config);
-            setNotifications(notifications.map(n => n._id === id ? { ...n, read: true } : n));
-        } catch (error) {
-            console.error('Failed to mark notification as read:', error);
+        e.stopPropagation(); // Prevent the menu from closing immediately
+        const notification = notifications.find(n => n._id === id);
+        // Only make API call if it's unread
+        if (notification && !notification.read) {
+            try {
+                await axios.put(`/api/notifications/${id}/read`, {}, { headers: { Authorization: `Bearer ${token}` } });
+                setNotifications(notifications.map(n => n._id === id ? { ...n, read: true } : n));
+            } catch (error) {
+                console.error('Failed to mark notification as read:', error);
+            }
         }
     };
 
@@ -71,12 +73,12 @@ const NotificationBell = () => {
                 PaperProps={{ style: { maxHeight: 400, width: '35ch' } }}
             >
                 {notifications.length === 0 ? (
-                    <MenuItem onClick={handleClose}>No new notifications</MenuItem>
+                    <MenuItem onClick={handleClose}>No notifications</MenuItem>
                 ) : (
                     notifications.map(notif => (
                         <MenuItem
                             key={notif._id}
-                            onClick={() => handleMarkAsRead(notif._id)}
+                            onClick={(e) => handleMarkAsRead(notif._id, e)}
                             sx={{ backgroundColor: notif.read ? 'transparent' : 'action.hover', whiteSpace: 'normal' }}
                         >
                             <ListItemText
