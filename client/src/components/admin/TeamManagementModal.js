@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext';
-import { Modal, Box, Typography, Select, MenuItem, Button, FormControl, InputLabel, List, ListItem, ListItemText, IconButton } from '@mui/material';
+import { Modal, Box, Typography, Select, MenuItem, Button, FormControl, InputLabel, List, ListItem, ListItemText, IconButton, Divider } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 const modalStyle = {
     position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-    width: 500, bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4,
+    width: 500, bgcolor: 'background.paper', border: '1px solid #ddd', borderRadius: 2, boxShadow: 24, p: 4,
 };
 
 const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
@@ -18,13 +18,13 @@ const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
     useEffect(() => {
         setCurrentTeam(team);
         setLeaderToSet(team.leader?._id || '');
-    }, [team]);
+    }, [team, open]); // Re-sync state when a new team is passed or modal opens
 
     const handleAddMember = async () => {
         if (!userToAdd) return;
         try {
             const { data } = await axios.post(`/api/teams/${team._id}/members`, { userId: userToAdd }, { headers: { Authorization: `Bearer ${token}` } });
-            setCurrentTeam(data);
+            setCurrentTeam(data); // The backend now returns the updated team
             setUserToAdd('');
         } catch (error) {
             alert(error.response?.data?.message || 'Failed to add member');
@@ -34,6 +34,7 @@ const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
     const handleRemoveMember = async (memberId) => {
         try {
             await axios.delete(`/api/teams/${team._id}/members/${memberId}`, { headers: { Authorization: `Bearer ${token}` } });
+            // Manually update local state to reflect the change immediately
             const updatedMembers = currentTeam.members.filter(m => m._id !== memberId);
             setCurrentTeam({ ...currentTeam, members: updatedMembers });
         } catch (error) {
@@ -54,10 +55,13 @@ const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
     return (
         <Modal open={open} onClose={onClose}>
             <Box sx={modalStyle}>
-                <Typography variant="h6">Manage Team: {team.name}</Typography>
-                <FormControl fullWidth sx={{ my: 2 }}>
+                <Typography variant="h6" gutterBottom>Manage Team: {team.name}</Typography>
+                <Divider sx={{ mb: 2 }} />
+                
+                <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel>Set Team Leader</InputLabel>
                     <Select value={leaderToSet} label="Set Team Leader" onChange={handleSetLeader}>
+                        <MenuItem value=""><em>None</em></MenuItem>
                         {currentTeam.members.map(member => (
                             <MenuItem key={member._id} value={member._id}>{member.name}</MenuItem>
                         ))}
@@ -65,7 +69,7 @@ const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
                 </FormControl>
                 
                 <Typography variant="subtitle1">Members</Typography>
-                <List>
+                <List sx={{ maxHeight: 200, overflow: 'auto' }}>
                     {currentTeam.members.map(member => (
                         <ListItem key={member._id} secondaryAction={
                             <IconButton edge="end" onClick={() => handleRemoveMember(member._id)}>
@@ -76,11 +80,13 @@ const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
                         </ListItem>
                     ))}
                 </List>
-                
-                <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                <Divider sx={{ my: 2 }} />
+
+                <Typography variant="subtitle1">Add New Member</Typography>
+                <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                     <FormControl fullWidth>
-                        <InputLabel>Add New Member</InputLabel>
-                        <Select value={userToAdd} label="Add New Member" onChange={(e) => setUserToAdd(e.target.value)}>
+                        <InputLabel>Select User</InputLabel>
+                        <Select value={userToAdd} label="Select User" onChange={(e) => setUserToAdd(e.target.value)}>
                             {allUsers.filter(u => !currentTeam.members.some(m => m._id === u._id)).map(user => (
                                 <MenuItem key={user._id} value={user._id}>{user.name}</MenuItem>
                             ))}
