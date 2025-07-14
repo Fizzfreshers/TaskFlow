@@ -3,8 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthContext } from './context/AuthContext';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import Header from './components/Header';
-import AdminDashboard from './pages/AdminDashboard'; 
 import { Container, CircularProgress, Box, CssBaseline } from '@mui/material';
 
 const App = () => {
@@ -26,7 +26,7 @@ const App = () => {
                 <Routes>
                     <Route path="/auth" element={!user ? <Auth /> : <Navigate to="/dashboard" />} />
                     <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/auth" />} />
-                    {/* ADD THIS PROTECTED ADMIN ROUTE */}
+                    {/* THIS IS THE PROTECTED ROUTE FOR THE ADMIN PANEL */}
                     <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/dashboard" />} />
                     <Route path="/" element={<Navigate to="/dashboard" />} />
                 </Routes>

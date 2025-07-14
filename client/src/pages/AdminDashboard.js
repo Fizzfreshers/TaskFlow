@@ -9,12 +9,12 @@ const AdminDashboard = () => {
             <Typography variant="h4" gutterBottom>Admin Control Panel</Typography>
             <Grid container spacing={3}>
                 <Grid item xs={12}>
-                    <Paper sx={{ p: 2 }}>
+                    <Paper sx={{ p: 2, height: 500 }}>
                         <TeamManagement />
                     </Paper>
                 </Grid>
                 <Grid item xs={12}>
-                    <Paper sx={{ p: 2 }}>
+                    <Paper sx={{ p: 2, height: 500 }}>
                         <UserManagement />
                     </Paper>
                 </Grid>

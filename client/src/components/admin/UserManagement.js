@@ -12,6 +12,7 @@ const UserManagement = () => {
     const socket = useContext(SocketContext);
 
     const fetchUsers = async () => {
+        if (!token) return;
         try {
             const { data } = await axios.get('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } });
             setUsers(data);
@@ -35,7 +36,7 @@ const UserManagement = () => {
             });
             return () => socket.off('userStatusChange');
         }
-    }, [socket]);
+    }, [socket, users]);
 
     const handleRoleChange = async (userId, newRole) => {
         try {
@@ -43,7 +44,6 @@ const UserManagement = () => {
             setUsers(users.map(user => user._id === userId ? { ...user, role: newRole } : user));
         } catch (error) {
             alert('Failed to update role.');
-            console.error("Role update error:", error);
         }
     };
 
@@ -63,14 +63,14 @@ const UserManagement = () => {
         {
             field: 'isOnline', headerName: 'Status', width: 120,
             renderCell: (params) => (
-                <Chip icon={<OnlinePredictionIcon />} label={params.value ? 'Online' : 'Offline'} color={params.value ? 'success' : 'default'} size="small" />
+                <Chip icon={<OnlinePredictionIcon />} label={params.value ? 'Online' : 'Offline'} color={params.value ? 'success' : 'default'} size="small" variant="outlined" />
             ),
         },
         { field: 'id', headerName: 'User ID', width: 220 },
     ];
 
     return (
-        <Box sx={{ height: 400, width: '100%' }}>
+        <Box sx={{ height: '100%', width: '100%' }}>
             <Typography variant="h6" gutterBottom>User Management</Typography>
             <DataGrid
                 rows={users.map(u => ({ ...u, id: u._id }))}

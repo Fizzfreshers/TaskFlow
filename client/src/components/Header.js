@@ -39,9 +39,7 @@ const Header = () => {
                                     Admin Panel
                                 </Button>
                             )}
-
                             <NotificationBell />
-
                             <Button color="inherit" onClick={handleLogout}>
                                 Logout
                             </Button>
