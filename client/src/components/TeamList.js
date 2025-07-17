@@ -33,28 +33,26 @@ const TeamList = ({ onManageTeam, onTeamAction }) => {
 
     useEffect(() => {
         if (socket) {
-            socket.on('userStatusChange', ({ userId, isOnline }) => {
-                setTeams(prevTeams =>
-                    prevTeams.map(team => ({
+            const handleUserStatusChange = ({ userId, isOnline }) => {
+                // Use a functional update to ensure we have the latest state
+                setTeams(currentTeams =>
+                    currentTeams.map(team => ({
                         ...team,
                         members: team.members.map(member =>
                             member._id === userId ? { ...member, isOnline } : member
                         )
                     }))
                 );
-            });
-            // *** NEW: Listen for team updates from the server ***
-            socket.on('teamUpdated', (updatedTeam) => {
-                setTeams(prevTeams => prevTeams.map(t => t._id === updatedTeam._id ? updatedTeam : t));
-                onTeamAction();
-            });
+            };
 
+            socket.on('userStatusChange', handleUserStatusChange);
+            
+            // Clean up the listener when the component unmounts
             return () => {
-                socket.off('userStatusChange');
-                socket.off('teamUpdated');
+                socket.off('userStatusChange', handleUserStatusChange);
             }
         }
-    }, [socket, onTeamAction]);
+    }, [socket]);
 
 
     return (

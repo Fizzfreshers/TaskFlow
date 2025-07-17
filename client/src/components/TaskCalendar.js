@@ -1,70 +1,70 @@
+// client/src/components/TaskCalendar.js
+
 import React, { useState, useEffect, useContext } from 'react';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { Paper, Typography, Box, CircularProgress } from '@mui/material';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid'; // for month view
+import timeGridPlugin from '@fullcalendar/timegrid'; // for week and day views
+import listPlugin from '@fullcalendar/list'; // for list/agenda view
+import interactionPlugin from '@fullcalendar/interaction'; // for click events
+import { Paper, Typography } from '@mui/material';
 
-const localizer = momentLocalizer(moment);
-
-const TaskCalendar = ({ onTaskClick }) => {
+// The onTaskClick prop is passed from Dashboard.js to open the detail modal
+const TaskCalendar = ({ onTaskClick, refreshTrigger }) => {
     const [events, setEvents] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [date, setDate] = useState(new Date());
-    const [view, setView] = useState('month');
     const { token } = useContext(AuthContext);
 
-    const fetchTasksForCalendar = async () => {
-        if (!token) return;
-        setLoading(true);
-        try {
-            const { data: tasks } = await axios.get('/api/tasks', { headers: { Authorization: `Bearer ${token}` } });
-            const calendarEvents = tasks
-                .filter(task => task.deadline)
-                .map(task => ({
-                    id: task._id,
-                    title: task.title,
-                    start: new Date(task.deadline),
-                    end: new Date(task.deadline),
-                    allDay: true,
-                    resource: task,
-                }));
-            setEvents(calendarEvents);
-        } catch (error) {
-            console.error('Error fetching tasks for calendar:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchTasksForCalendar();
-    }, [token]);
+        const fetchTasks = async () => {
+            if (!token) return;
+            try {
+                const config = { headers: { Authorization: `Bearer ${token}` } };
+                const { data: tasks } = await axios.get('http://localhost:5000/api/tasks', config);
+                
+                // Map tasks to FullCalendar's event format
+                const calendarEvents = tasks
+                    .filter(task => task.deadline) // Make sure task has a deadline
+                    .map(task => ({
+                        id: task._id,
+                        title: task.title,
+                        date: task.deadline, // FullCalendar uses 'date' for the event time
+                        extendedProps: {
+                            // Store the full task object here
+                            taskDetails: task,
+                        }
+                    }));
+                setEvents(calendarEvents);
+            } catch (error) {
+                console.error("Failed to fetch tasks for calendar:", error);
+            }
+        };
 
-    const handleSelectEvent = (event) => {
-        if (event.resource) {
-            onTaskClick(event.resource);
+        fetchTasks();
+    }, [token, refreshTrigger]); // Re-fetch when the refreshTrigger changes
+
+    // This handler is called when a user clicks on an event
+    const handleEventClick = (clickInfo) => {
+        // The full task object is in extendedProps
+        if (clickInfo.event.extendedProps.taskDetails && onTaskClick) {
+            onTaskClick(clickInfo.event.extendedProps.taskDetails);
         }
     };
-    
-    if (loading) return <Box display="flex" justifyContent="center" my={4}><CircularProgress /></Box>;
 
     return (
-        <Paper sx={{ height: '50vh', p: 2, mt: 3 }}>
+        <Paper sx={{ p: 2, mt: 3, '.fc-button': { textTransform: 'capitalize' } }}>
             <Typography variant="h5" gutterBottom>Calendar</Typography>
-            <Calendar
-                localizer={localizer}
+            <FullCalendar
+                plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
+                initialView="dayGridMonth"
+                headerToolbar={{
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                }}
                 events={events}
-                startAccessor="start"
-                endAccessor="end"
-                style={{ height: 'calc(100% - 48px)' }}
-                onSelectEvent={handleSelectEvent}
-                date={date}
-                view={view}
-                onNavigate={newDate => setDate(newDate)}
-                onView={newView => setView(newView)}
-                views={['month', 'week', 'day', 'agenda']}
+                eventClick={handleEventClick}
+                height="60vh"
             />
         </Paper>
     );

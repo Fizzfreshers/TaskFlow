@@ -29,21 +29,28 @@ const UserSidebar = () => {
 
     useEffect(() => {
         if (socket) {
+            // This function will be called when the event is received
             const handleUserStatusChange = ({ userId, isOnline }) => {
-                setTeamsWithUsers(prevTeams =>
-                    prevTeams.map(team => ({
-                        ...team,
-                        members: team.members.map(member =>
-                            member._id === userId ? { ...member, isOnline } : member
-                        )
-                    }))
-                );
+                setTeamsWithUsers(currentTeams => {
+                    // Use a functional update to ensure you have the latest state
+                    return currentTeams.map(team => {
+                        const newMembers = team.members.map(member => {
+                            if (member._id === userId) {
+                                return { ...member, isOnline };
+                            }
+                            return member;
+                        });
+                        return { ...team, members: newMembers };
+                    });
+                });
             };
 
             socket.on('userStatusChange', handleUserStatusChange);
-            return () => socket.off('userStatusChange', handleUserStatusChange);
+            return () => {
+                socket.off('userStatusChange', handleUserStatusChange);
+            };
         }
-    }, [socket, teamsWithUsers]);
+    }, [socket]);
 
 
     return (

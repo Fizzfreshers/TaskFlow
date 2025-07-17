@@ -59,21 +59,21 @@ const TeamManagement = ({ key: refreshKey }) => {
     };
 
     const columns = [
+        // The `flex` property allows the column to grow and shrink.
         { field: 'name', headerName: 'Team Name', flex: 1, minWidth: 150 },
         {
             field: 'leader',
             headerName: 'Leader',
-            flex: 1,
+            flex: 1, 
             minWidth: 150,
-            valueGetter: (params) => params?.row?.leader?.name || 'Not Assigned',
+            valueGetter: (value, row) => row.leader?.name || 'Not Assigned',
         },
         {
             field: 'members',
             headerName: 'Members',
-            flex: 2,
-            minWidth: 250,
-            valueGetter: (params) =>
-                params?.row?.members?.map((m) => m.name).join(', ') || '',
+            type: 'number',
+            width: 130, // A fixed width is fine for a number column.
+            valueGetter: (value, row) => row.members?.length || 0,
         },
         {
             field: 'actions',
@@ -81,7 +81,6 @@ const TeamManagement = ({ key: refreshKey }) => {
             width: 120,
             sortable: false,
             filterable: false,
-            disableColumnMenu: true,
             renderCell: (params) => (
                 <Box>
                     <IconButton onClick={() => handleOpenModal(params.row)} aria-label="manage team">

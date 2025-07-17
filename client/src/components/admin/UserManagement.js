@@ -28,16 +28,19 @@ const UserManagement = ({ key: refreshKey }) => {
 
     useEffect(() => {
         if (socket) {
-            socket.on('userStatusChange', ({ userId, isOnline }) => {
+            const handleUserStatusChange = ({ userId, isOnline }) => {
+                // Use a functional update to prevent stale state issues
                 setUsers(prevUsers =>
                     prevUsers.map(user =>
                         user._id === userId ? { ...user, isOnline } : user
                     )
                 );
-            });
-            return () => socket.off('userStatusChange');
+            };
+            socket.on('userStatusChange', handleUserStatusChange);
+            
+            return () => socket.off('userStatusChange', handleUserStatusChange);
         }
-    }, [socket, users]);
+    }, [socket]);
 
     const handleRoleChange = async (userId, newRole) => {
         try {
@@ -73,7 +76,7 @@ const UserManagement = ({ key: refreshKey }) => {
             field: 'role',
             headerName: 'Role',
             width: 150,
-            editable: true, // This makes the cell editable
+            editable: true,
             type: 'singleSelect',
             valueOptions: ['user', 'team-leader', 'admin'],
         },
@@ -82,11 +85,14 @@ const UserManagement = ({ key: refreshKey }) => {
             headerName: 'Teams',
             flex: 1,
             minWidth: 200,
-            valueGetter: (params) =>
-                params?.row?.teams?.map((team) => team.name).join(', ') || 'No Teams',
+            // FIX: Map over the populated teams array and join their names
+            valueGetter: (value, row) => 
+                (row.teams && row.teams.length > 0)
+                    ? row.teams.map((team) => team.name).join(', ')
+                    : 'No Teams',
         }
     ];
-
+    
     return (
         <Box sx={{ height: 400, width: '100%' }}>
             <Typography variant="h6" gutterBottom>User Management</Typography>
