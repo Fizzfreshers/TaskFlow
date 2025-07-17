@@ -1,16 +1,18 @@
+// client/src/components/TeamList.js
+
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { SocketContext } from '../context/SocketContext';
-import { Box, Typography, List, ListItem, ListItemText, ListItemAvatar, Avatar, Chip, Divider, TextField, Button, IconButton } from '@mui/material';
+import { Box, Typography, List, ListItem, ListItemText, ListItemAvatar, Avatar, Chip, Divider, IconButton } from '@mui/material';
 import GroupIcon from '@mui/icons-material/Group';
 import OnlinePredictionIcon from '@mui/icons-material/OnlinePrediction';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import DeleteIcon from '@mui/icons-material/Delete';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts'; // Import Manage icon
 
-const TeamList = ({ onTeamAction }) => {
+// *** MODIFIED: Added onManageTeam prop ***
+const TeamList = ({ onManageTeam, onTeamAction }) => {
     const [teams, setTeams] = useState([]);
-    const [newTeamName, setNewTeamName] = useState('');
     const { token, user } = useContext(AuthContext);
     const socket = useContext(SocketContext);
 
@@ -41,51 +43,34 @@ const TeamList = ({ onTeamAction }) => {
                     }))
                 );
             });
-            return () => socket.off('userStatusChange');
-        }
-    }, [socket]);
-
-    const handleCreateTeam = async (e) => {
-        e.preventDefault();
-        try {
-            await axios.post('http://localhost:5000/api/teams', { name: newTeamName }, { headers: { Authorization: `Bearer ${token}` } });
-            setNewTeamName('');
-            onTeamAction(); // This will trigger a re-fetch in useEffect
-        } catch (error) {
-            alert(error.response?.data?.message || 'Failed to create team');
-        }
-    };
-
-    const handleDeleteTeam = async (teamId) => {
-        if (window.confirm('Are you sure you want to permanently delete this team?')) {
-            try {
-                await axios.delete(`http://localhost:5000/api/teams/${teamId}`, { headers: { Authorization: `Bearer ${token}` } });
+            // *** NEW: Listen for team updates from the server ***
+            socket.on('teamUpdated', (updatedTeam) => {
+                setTeams(prevTeams => prevTeams.map(t => t._id === updatedTeam._id ? updatedTeam : t));
                 onTeamAction();
-            } catch (error) {
-                alert(error.response?.data?.message || 'Failed to delete team');
+            });
+
+            return () => {
+                socket.off('userStatusChange');
+                socket.off('teamUpdated');
             }
         }
-    };
+    }, [socket, onTeamAction]);
+
 
     return (
         <Box>
-            <Typography variant="h5" gutterBottom>Teams</Typography>
-            {user.role === 'admin' && (
-                <Box component="form" onSubmit={handleCreateTeam} sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                    <TextField size="small" label="New Team Name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} required sx={{ flexGrow: 1 }} />
-                    <Button type="submit" variant="contained">Create</Button>
-                </Box>
-            )}
+            <Typography variant="h5" gutterBottom>My Teams</Typography>
             <List sx={{ width: '100%', bgcolor: 'background.paper', maxHeight: '30vh', overflowY: 'auto' }}>
                 {teams.map((team, index) => (
                     <React.Fragment key={team._id}>
                         <ListItem
                             secondaryAction={
-                                user.role === 'admin' ? (
-                                    <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteTeam(team._id)}>
-                                        <DeleteIcon />
+                                // *** MODIFIED: Show Manage button for Admins or Team Leaders ***
+                                (user.role === 'admin' || user._id === team.leader?._id) && (
+                                    <IconButton edge="end" aria-label="manage" onClick={() => onManageTeam(team)}>
+                                        <ManageAccountsIcon />
                                     </IconButton>
-                                ) : null
+                                )
                             }
                         >
                             <ListItemAvatar><Avatar><GroupIcon /></Avatar></ListItemAvatar>
@@ -93,15 +78,16 @@ const TeamList = ({ onTeamAction }) => {
                                 primary={team.name}
                                 secondary={
                                     <Box component="span" sx={{ display: 'flex', flexDirection: 'column' }}>
-                                        {team.members.map(member => (
+                                        {team.members.slice(0, 5).map(member => ( // Show max 5 members for brevity
                                             <Box key={member._id} component="span" sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
                                                 <OnlinePredictionIcon sx={{ mr: 0.5, fontSize: '1rem' }} color={member.isOnline ? 'success' : 'disabled'} />
                                                 <Typography variant="caption">{member.name}</Typography>
                                                 {team.leader?._id === member._id && (
-                                                    <Chip label="Leader" color="primary" size="small" sx={{ ml: 1 }} icon={<AdminPanelSettingsIcon />} />
+                                                    <Chip label="Leader" color="primary" size="small" sx={{ ml: 1, height: 18 }} icon={<AdminPanelSettingsIcon sx={{fontSize: '1rem'}} />} />
                                                 )}
                                             </Box>
                                         ))}
+                                        {team.members.length > 5 && <Typography variant="caption">...and {team.members.length - 5} more.</Typography>}
                                     </Box>
                                 }
                             />

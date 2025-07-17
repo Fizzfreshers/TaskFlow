@@ -6,7 +6,7 @@ import { Box, Typography, Select, MenuItem, Chip } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import OnlinePredictionIcon from '@mui/icons-material/OnlinePrediction';
 
-const UserManagement = () => {
+const UserManagement = ({ key: refreshKey }) => {
     const [users, setUsers] = useState([]);
     const { token } = useContext(AuthContext);
     const socket = useContext(SocketContext);
@@ -14,7 +14,8 @@ const UserManagement = () => {
     const fetchUsers = async () => {
         if (!token) return;
         try {
-            const { data } = await axios.get('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } });
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const { data } = await axios.get('http://localhost:5000/api/admin/users', config);
             setUsers(data);
         } catch (error) {
             console.error("Failed to fetch users:", error);
@@ -23,7 +24,7 @@ const UserManagement = () => {
 
     useEffect(() => {
         fetchUsers();
-    }, [token]);
+    }, [token, refreshKey]);
 
     useEffect(() => {
         if (socket) {
@@ -40,44 +41,69 @@ const UserManagement = () => {
 
     const handleRoleChange = async (userId, newRole) => {
         try {
-            await axios.put(`/api/admin/users/${userId}/role`, { role: newRole }, { headers: { Authorization: `Bearer ${token}` } });
-            setUsers(users.map(user => user._id === userId ? { ...user, role: newRole } : user));
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            await axios.put(`http://localhost:5000/api/admin/users/${userId}/role`, { role: newRole }, config);
+            // We fetch users again to ensure the data is fresh from the server
+            fetchUsers();
+            alert('User role updated successfully!');
         } catch (error) {
             alert('Failed to update role.');
+            console.error(error);
         }
     };
 
+    // Correct columns array that includes the Role column
     const columns = [
-        { field: 'name', headerName: 'Name', width: 200 },
-        { field: 'email', headerName: 'Email', width: 250 },
+        { field: 'name', headerName: 'Name', flex: 1, minWidth: 150 },
+        { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
         {
-            field: 'role', headerName: 'Role', width: 150,
+            field: 'isOnline',
+            headerName: 'Status',
+            width: 120,
             renderCell: (params) => (
-                <Select value={params.value} onChange={(e) => handleRoleChange(params.id, e.target.value)} size="small" sx={{ width: '100%' }}>
-                    <MenuItem value="user">User</MenuItem>
-                    <MenuItem value="team-leader">Team Leader</MenuItem>
-                    <MenuItem value="admin">Admin</MenuItem>
-                </Select>
-            ),
+                <Chip
+                    icon={<OnlinePredictionIcon />}
+                    label={params.value ? 'Online' : 'Offline'}
+                    color={params.value ? 'success' : 'default'}
+                    size="small"
+                />
+            )
         },
         {
-            field: 'isOnline', headerName: 'Status', width: 120,
-            renderCell: (params) => (
-                <Chip icon={<OnlinePredictionIcon />} label={params.value ? 'Online' : 'Offline'} color={params.value ? 'success' : 'default'} size="small" variant="outlined" />
-            ),
+            field: 'role',
+            headerName: 'Role',
+            width: 150,
+            editable: true, // This makes the cell editable
+            type: 'singleSelect',
+            valueOptions: ['user', 'team-leader', 'admin'],
         },
-        { field: 'id', headerName: 'User ID', width: 220 },
+        {
+            field: 'teams',
+            headerName: 'Teams',
+            flex: 1,
+            minWidth: 200,
+            valueGetter: (params) =>
+                params?.row?.teams?.map((team) => team.name).join(', ') || 'No Teams',
+        }
     ];
 
     return (
-        <Box sx={{ height: '100%', width: '100%' }}>
+        <Box sx={{ height: 400, width: '100%' }}>
             <Typography variant="h6" gutterBottom>User Management</Typography>
             <DataGrid
-                rows={users.map(u => ({ ...u, id: u._id }))}
+                rows={users}
                 columns={columns}
-                initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
+                getRowId={(row) => row._id}
+                initialState={{
+                    pagination: { paginationModel: { pageSize: 5 } },
+                }}
                 pageSizeOptions={[5]}
-                checkboxSelection
+                disableRowSelectionOnClick
+                // This function saves the role change when you edit the cell
+                processRowUpdate={(newRow) => {
+                    handleRoleChange(newRow._id, newRow.role);
+                    return newRow;
+                }}
             />
         </Box>
     );

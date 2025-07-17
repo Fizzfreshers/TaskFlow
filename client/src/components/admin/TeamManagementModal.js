@@ -16,7 +16,6 @@ const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
     const { token } = useContext(AuthContext);
 
     useEffect(() => {
-        // This effect ensures the modal state is fresh every time it opens.
         if (open) {
             setCurrentTeam(team);
             setLeaderToSet(team.leader?._id || '');
@@ -26,11 +25,12 @@ const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
     const handleAddMember = async () => {
         if (!userToAdd) return;
         try {
-            // The team member routes are now on the /api/teams endpoint
-            const { data } = await axios.post(`/api/teams/${team._id}/members`, { userId: userToAdd }, { headers: { Authorization: `Bearer ${token}` } });
-            // The backend sends back the updated team object which we can use to refresh state
-            const updatedTeamWithPopulatedMembers = { ...data, members: allUsers.filter(u => data.members.includes(u._id)) };
-            setCurrentTeam(updatedTeamWithPopulatedMembers);
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            // **FIXED**: Using the correct /api/teams endpoint
+            const { data } = await axios.post(`http://localhost:5000/api/teams/${currentTeam._id}/members`, { userId: userToAdd }, config);
+            
+            // The backend now returns a fully populated team object, we can just use that.
+            setCurrentTeam(data);
             setUserToAdd('');
         } catch (error) {
             alert(error.response?.data?.message || 'Failed to add member');
@@ -38,12 +38,22 @@ const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
     };
 
     const handleRemoveMember = async (memberId) => {
-        try {
-            await axios.delete(`/api/teams/${team._id}/members/${memberId}`, { headers: { Authorization: `Bearer ${token}` } });
-            const updatedMembers = currentTeam.members.filter(m => m._id !== memberId);
-            setCurrentTeam({ ...currentTeam, members: updatedMembers });
-        } catch (error) {
-            alert(error.response?.data?.message || 'Failed to remove member');
+        if (window.confirm('Are you sure you want to remove this member?')) {
+            try {
+                const config = { headers: { Authorization: `Bearer ${token}` } };
+                // **FIXED**: Using the correct /api/teams endpoint
+                await axios.delete(`http://localhost:5000/api/teams/${currentTeam._id}/members/${memberId}`, config);
+                
+                const updatedMembers = currentTeam.members.filter(m => m._id !== memberId);
+                // Also update the leader if the removed member was the leader
+                const newLeaderId = currentTeam.leader?._id === memberId ? (updatedMembers[0]?._id || '') : currentTeam.leader?._id;
+                
+                setCurrentTeam({ ...currentTeam, members: updatedMembers, leader: { _id: newLeaderId } });
+                setLeaderToSet(newLeaderId);
+                
+            } catch (error) {
+                alert(error.response?.data?.message || 'Failed to remove member');
+            }
         }
     };
     
@@ -51,7 +61,9 @@ const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
         const newLeaderId = e.target.value;
         setLeaderToSet(newLeaderId);
         try {
-            await axios.put(`/api/teams/${team._id}/leader`, { userId: newLeaderId }, { headers: { Authorization: `Bearer ${token}` } });
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            // **FIXED**: Using the correct /api/teams endpoint
+            await axios.put(`http://localhost:5000/api/teams/${currentTeam._id}/leader`, { userId: newLeaderId }, config);
         } catch (error) {
             alert(error.response?.data?.message || 'Failed to set leader');
         }
@@ -60,13 +72,12 @@ const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
     return (
         <Modal open={open} onClose={onClose}>
             <Box sx={modalStyle}>
-                <Typography variant="h6" gutterBottom>Manage Team: {team.name}</Typography>
+                <Typography variant="h6" gutterBottom>Manage Team: {currentTeam.name}</Typography>
                 <Divider sx={{ mb: 2 }} />
                 
                 <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel id="leader-select-label">Set Team Leader</InputLabel>
                     <Select labelId="leader-select-label" value={leaderToSet} label="Set Team Leader" onChange={handleSetLeader}>
-                        <MenuItem value=""><em>None</em></MenuItem>
                         {currentTeam.members.map(member => (
                             <MenuItem key={member._id} value={member._id}>{member.name}</MenuItem>
                         ))}
