@@ -1,8 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
-const User = require('../models/User');
-const Team = require('../models/Team');
+const { protect } = require('../middleware/authMiddleware'); //
+const User = require('../models/User'); //
+const Team = require('../models/Team'); //
+
+router.get('/me', protect, (req, res) => {
+    res.json(req.user);
+});
+
 
 router.get('/', protect, async (req, res) => {
     try {

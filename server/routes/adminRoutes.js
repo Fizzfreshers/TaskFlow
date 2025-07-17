@@ -5,46 +5,39 @@ const { admin } = require('../middleware/roleMiddleware');
 const User = require('../models/User');
 const Team = require('../models/Team');
 
-// GET all users for admin panel
-router.get('/users', async (req, res) => {
+// Get all users
+router.get('/users', protect, admin, async (req, res) => {
     try {
-        const users = await User.find({}).select('-password');
+        const users = await User.find({}).select('-password').populate('teams', 'name');
         res.json(users);
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        res.status(500).json({ message: error.message });
     }
 });
 
-// GET all teams for admin panel
-router.get('/teams', async (req, res) => {
+// Get all teams
+router.get('/teams', protect, admin, async (req, res) => {
     try {
-        const teams = await Team.find({})
-            .populate('leader', 'name')
-            .populate('members', 'name');
+        const teams = await Team.find({}).populate('leader', 'name').populate('members', 'name');
         res.json(teams);
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        res.status(500).json({ message: error.message });
     }
 });
 
-// PUT update a user's role
-router.put('/users/:id/role', async (req, res) => {
+router.put('/users/:userId/role', protect, admin, async (req, res) => {
     try {
         const { role } = req.body;
-        if (!['user', 'team-leader', 'admin'].includes(role)) {
-            return res.status(400).json({ message: 'Invalid role specified.' });
+        const user = await User.findById(req.params.userId);
+        if (user) {
+            user.role = role;
+            await user.save();
+            res.json({ message: 'User role updated' });
+        } else {
+            res.status(404).json({ message: 'User not found' });
         }
-
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found.' });
-        }
-
-        user.role = role;
-        await user.save();
-        res.json({ message: 'User role updated successfully.', user });
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        res.status(500).json({ message: error.message });
     }
 });
 

@@ -1,59 +1,96 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 const { protect } = require('../middleware/authMiddleware');
 const Task = require('../models/Task');
+const Team = require('../models/Team');
+const User = require('../models/User');
 const Notification = require('../models/Notifications');
 
-// get all tasks for the authenticated user or their teams
+// --- GET ALL TASKS (FIXED for Admin Visibility) ---
 router.get('/', protect, async (req, res) => {
     try {
-        const tasks = await Task.find({
-            $or: [
-                { assignedTo: req.user._id },
-                { teams: { $in: req.user.teams } } // find tasks in any of the user's teams
-            ]
-        })
-        .populate('assignedTo', 'name email')
-        .populate('teams', 'name') // populate the array of teams
-        .populate('createdBy', 'name email');
+        let tasks;
+        // If the user is an admin, fetch all tasks.
+        if (req.user.role === 'admin') {
+            tasks = await Task.find({})
+                .populate('assignedTo', 'name email')
+                .populate('teams', 'name')
+                .populate('createdBy', 'name email');
+        } else {
+            // Otherwise, fetch tasks relevant to the user (creator, assignee, or team member)
+            const userTeams = await Team.find({ members: req.user._id }).select('_id');
+            const teamIds = userTeams.map(t => t._id);
 
+            tasks = await Task.find({
+                $or: [
+                    { createdBy: req.user._id },
+                    { assignedTo: req.user._id },
+                    { teams: { $in: teamIds } }
+                ]
+            }).populate('assignedTo', 'name email').populate('teams', 'name').populate('createdBy', 'name email');
+        }
         res.json(tasks);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-// create a new task
+
+// --- CREATE A NEW TASK (UPDATED with new assignment logic) ---
 router.post('/', protect, async (req, res) => {
     const { title, description, deadline, assignedTo, teams } = req.body;
+    const creator = await User.findById(req.user._id);
+
     try {
+        // --- Authorization Logic for Assignment ---
+        if (assignedTo && assignedTo.length > 0) {
+            if (creator.role === 'user') {
+                return res.status(403).json({ message: "You are not authorized to assign tasks to individuals." });
+            }
+            if (creator.role === 'team-leader') {
+                // Team leaders can only assign to members of teams they lead.
+                const leaderTeams = await Team.find({ leader: creator._id });
+                const manageableMemberIds = new Set(leaderTeams.flatMap(team => team.members.map(id => id.toString())));
+
+                const isAssignmentValid = assignedTo.every(userId => manageableMemberIds.has(userId.toString()));
+                if (!isAssignmentValid) {
+                    return res.status(403).json({ message: "You can only assign tasks to members of your own team(s)." });
+                }
+            }
+        }
+
+        const isPrivate = !assignedTo?.length && !teams?.length;
+
         const task = new Task({
-            title, description, deadline, assignedTo: assignedTo || [], teams: teams || [], createdBy: req.user._id,
+            title, description, deadline, assignedTo: assignedTo || [], teams: teams || [],
+            createdBy: req.user._id,
+            isPrivate
         });
         const createdTask = await task.save();
 
-        const recipients = new Set(createdTask.assignedTo.map(id => id.toString()));
-        // add all members of all assigned teams to recipients
-        if (createdTask.teams && createdTask.teams.length > 0) {
-            const teamsWithMembers = await mongoose.model('Team').find({ '_id': { $in: createdTask.teams } }).select('members');
-            teamsWithMembers.forEach(team => {
-                team.members.forEach(memberId => recipients.add(memberId.toString()));
-            });
-        }
-        
-        recipients.delete(req.user._id.toString()); // avoid self-notify
+        // --- Notification Logic ---
+        if (!isPrivate) {
+            const recipients = new Set((assignedTo || []).map(id => id.toString()));
+            if (teams && teams.length > 0) {
+                const teamsWithMembers = await Team.find({ '_id': { $in: teams } }).select('members');
+                teamsWithMembers.forEach(team => {
+                    team.members.forEach(memberId => recipients.add(memberId.toString()));
+                });
+            }
+            recipients.delete(req.user._id.toString());
 
-        for (const recipientId of recipients) {
-            const notification = new Notification({
-                recipient: recipientId,
-                sender: req.user._id,
-                type: 'task_assigned',
-                message: `You have been assigned to a new task: "${createdTask.title}" by ${req.user.name}.`,
-                taskId: createdTask._id,
-            });
-            await notification.save();
-            req.io.to(recipientId).emit('newNotification', notification);
+            for (const recipientId of recipients) {
+                const notification = new Notification({
+                    recipient: recipientId,
+                    sender: req.user._id,
+                    type: 'task_assigned',
+                    message: `You have been assigned to a new task: "${createdTask.title}" by ${creator.name}.`,
+                    taskId: createdTask._id,
+                });
+                await notification.save();
+                req.io.to(recipientId).emit('newNotification', notification);
+            }
         }
 
         res.status(201).json(createdTask);
@@ -74,6 +111,12 @@ router.get('/:id', protect, async (req, res) => {
         if (!task) {
             return res.status(404).json({ message: 'Task not found' });
         }
+
+        // If the task is private, only the creator can see it
+        if (task.isPrivate && task.createdBy.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'Not authorized to view this task' });
+        }
+
         // basic auth: ensure user is involved with the task or its team
         const isAssigned = task.assignedTo.some(id => id.equals(req.user._id));
         const isCreator = task.createdBy.equals(req.user._id);
@@ -94,7 +137,6 @@ router.get('/:id', protect, async (req, res) => {
     }
 });
 
-
 // update a task
 router.put('/:id', protect, async (req, res) => {
     const { title, description, deadline, status, assignedTo, teams } = req.body;
@@ -106,6 +148,7 @@ router.put('/:id', protect, async (req, res) => {
         const isCreator = task.createdBy.equals(req.user._id);
         const isAssigned = task.assignedTo.some(id => id.equals(req.user._id));
 
+        // You may want to add a check here to see if the user is a team leader of an assigned team
         if (!isCreator && !isAssigned && req.user.role !== 'admin') {
              return res.status(403).json({ message: 'Not authorized to update this task' });
         }
@@ -116,6 +159,9 @@ router.put('/:id', protect, async (req, res) => {
         task.status = status || task.status;
         task.assignedTo = assignedTo !== undefined ? assignedTo : task.assignedTo;
         task.teams = teams !== undefined ? teams : task.teams;
+        
+        // Update the private status
+        task.isPrivate = !task.assignedTo?.length && !task.teams?.length;
 
         const updatedTask = await task.save();
         // Add advanced notification logic here for updates if needed
@@ -124,7 +170,6 @@ router.put('/:id', protect, async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 });
-
 // delete a task
 router.delete('/:id', protect, async (req, res) => {
     try {
@@ -136,7 +181,14 @@ router.delete('/:id', protect, async (req, res) => {
         // Authorization: Only creator or admin can delete
         const isCreator = task.createdBy.equals(req.user._id);
         if (!isCreator && req.user.role !== 'admin') {
-            return res.status(403).json({ message: 'Not authorized to delete this task' });
+            // Also allow team leaders to delete tasks assigned to their teams
+            const userIsTeamLeaderOfAssignedTeam = await Team.exists({
+                _id: { $in: task.teams },
+                leader: req.user._id,
+            });
+            if (!userIsTeamLeaderOfAssignedTeam) {
+                 return res.status(403).json({ message: 'Not authorized to delete this task' });
+            }
         }
 
         await task.deleteOne();
@@ -145,6 +197,7 @@ router.delete('/:id', protect, async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 
 module.exports = router;

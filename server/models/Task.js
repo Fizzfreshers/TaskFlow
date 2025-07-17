@@ -7,7 +7,8 @@ const TaskSchema = new mongoose.Schema({
     status: { type: String, enum: ['pending', 'in-progress', 'completed'], default: 'pending' },
     assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     teams: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }],
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    isPrivate: { type: Boolean, default: false } // Add this line
 }, { timestamps: true });
 
 module.exports = mongoose.model('Task', TaskSchema);

@@ -11,8 +11,8 @@ const teamRoutes = require('./routes/teamRoutes');
 const userRoutes = require('./routes/userRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-const { protect } = require('../middleware/authMiddleware');
-const { admin } = require('../middleware/roleMiddleware');
+const { protect } = require('./middleware/authMiddleware');
+const { admin } = require('./middleware/roleMiddleware');
 const User = require('./models/User');
 
 const app = express();
