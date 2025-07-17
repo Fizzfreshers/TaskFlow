@@ -4,6 +4,7 @@ const { protect } = require('../middleware/authMiddleware');
 const { admin } = require('../middleware/roleMiddleware');
 const User = require('../models/User');
 const Team = require('../models/Team');
+const Notification = require('../models/Notifications');
 
 // Get all users
 router.get('/users', protect, admin, async (req, res) => {
@@ -32,6 +33,14 @@ router.put('/users/:userId/role', protect, admin, async (req, res) => {
         if (user) {
             user.role = role;
             await user.save();
+            const roleNotification = new Notification({
+                recipient: req.params.userId,
+                sender: req.user._id,
+                type: 'role_change',
+                message: `Your role has been changed to "${role}" by an administrator.`,
+        });
+            await roleNotification.save();
+            req.io.to(req.params.userId).emit('newNotification', roleNotification)
             res.json({ message: 'User role updated' });
         } else {
             res.status(404).json({ message: 'User not found' });

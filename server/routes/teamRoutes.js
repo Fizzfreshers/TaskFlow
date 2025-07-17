@@ -5,6 +5,7 @@ const { admin, teamLeaderOrAdmin } = require('../middleware/roleMiddleware');
 const Team = require('../models/Team');
 const User = require('../models/User');
 const Task = require('../models/Task');
+const Notification = require('../models/Notifications');
 
 // --- GET All Teams (No changes needed here, but included for completeness) ---
 router.get('/', protect, async (req, res) => {
@@ -123,6 +124,15 @@ router.post('/:teamId/members', protect, teamLeaderOrAdmin, async (req, res) => 
         await user.save();
         
         const populatedTeam = await Team.findById(team._id).populate('leader', 'name').populate('members', 'name');
+        const notification = new Notification({
+            recipient: userId,
+            sender: req.user._id,
+            type: 'team_added',
+            message: `You have been added to the team "${team.name}" by ${req.user.name}.`,
+            teamId: team._id,
+        });
+        await notification.save();
+        req.io.to(userId).emit('newNotification', notification);
         res.json(populatedTeam);
         
     } catch (error) {
@@ -203,6 +213,15 @@ router.put('/:teamId/leader', protect, teamLeaderOrAdmin, async (req, res) => {
         await User.findByIdAndUpdate(newLeaderId, { role: 'team-leader' });
         
         await team.save();
+        const leaderNotification = new Notification({
+            recipient: newLeaderId,
+            sender: req.user._id,
+            type: 'role_change',
+            message: `You have been made the leader of the team "${team.name}".`,
+            teamId: team._id,
+        });
+        await leaderNotification.save();
+        req.io.to(newLeaderId).emit('newNotification', leaderNotification);
         res.json(team);
     } catch (error) {
         res.status(500).json({ message: error.message });
