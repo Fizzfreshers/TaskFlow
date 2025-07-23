@@ -1,53 +1,100 @@
-import React from 'react';
-import { Box, Typography, Divider, Chip, List, ListItem, ListItemText, ListItemAvatar, Avatar } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
-import GroupIcon from '@mui/icons-material/Group';
+import { Box, Typography, Chip, List, ListItem, ListItemText, ListItemAvatar, Avatar, Paper } from "@mui/material"
 
-const statusColors = {
-    pending: 'warning',
-    'in-progress': 'info',
-    completed: 'success',
-};
+const statusConfig = {
+  pending: { color: "#f59e0b", bg: "#fef3c7", label: "Pending" },
+  "in-progress": { color: "#3b82f6", bg: "#dbeafe", label: "In Progress" },
+  completed: { color: "#10b981", bg: "#d1fae5", label: "Completed" },
+}
 
 const TaskDetail = ({ task }) => {
-    if (!task) return null;
+  if (!task) return null
 
-    return (
-        <Box>
-            <Typography id="task-detail-title" variant="h4" gutterBottom>{task.title}</Typography>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-                <Chip label={task.status} color={statusColors[task.status]} sx={{ textTransform: 'capitalize' }} />
-                <Typography variant="body1">
-                    <strong>Deadline:</strong> {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'N/A'}
-                </Typography>
-            </Box>
-            <Divider sx={{ mb: 2 }} />
-            
-            <Typography variant="h6">Description</Typography>
-            <Typography id="task-detail-description" paragraph>{task.description || 'No description provided.'}</Typography>
-            <Divider sx={{ mb: 2 }} />
-            
-            <Typography variant="h6">Assigned To</Typography>
-            <List>
-                {task.assignedTo && task.assignedTo.length > 0 ? task.assignedTo.map(user => (
-                    <ListItem key={user._id}>
-                        <ListItemAvatar><Avatar><PersonIcon /></Avatar></ListItemAvatar>
-                        <ListItemText primary={user.name} secondary={user.email} />
-                    </ListItem>
-                )) : <ListItem><ListItemText primary="No individual users assigned." /></ListItem>}
-            </List>
+  const statusInfo = statusConfig[task.status] || statusConfig.pending
+  const formattedDate = task.deadline ? new Date(task.deadline).toLocaleString() : "No deadline"
 
-            <Typography variant="h6">Assigned Teams</Typography>
-            <List>
-                 {task.teams && task.teams.length > 0 ? task.teams.map(team => (
-                    <ListItem key={team._id}>
-                        <ListItemAvatar><Avatar><GroupIcon /></Avatar></ListItemAvatar>
-                        <ListItemText primary={team.name} />
-                    </ListItem>
-                )) : <ListItem><ListItemText primary="No teams assigned." /></ListItem>}
-            </List>
-        </Box>
-    );
-};
+  return (
+    <Box>
+      <Typography variant="h4" sx={{ fontWeight: 500, mb: 2 }}>
+        {task.title}
+      </Typography>
 
-export default TaskDetail;
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3, alignItems: "center" }}>
+        <Chip
+          label={statusInfo.label}
+          sx={{
+            bgcolor: statusInfo.bg,
+            color: statusInfo.color,
+            fontWeight: 500,
+            border: `1px solid ${statusInfo.color}20`,
+            px: 1,
+          }}
+        />
+
+        <Typography variant="body2" color="text.secondary">
+          Due: {formattedDate}
+        </Typography>
+      </Box>
+
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          mb: 3,
+          borderRadius: 2,
+          bgcolor: "background.surface",
+        }}
+      >
+        <Typography variant="h6" sx={{ fontWeight: 500, mb: 1 }}>
+          Description
+        </Typography>
+        <Typography variant="body1">{task.description || "No description provided."}</Typography>
+      </Paper>
+
+      <Typography variant="h6" sx={{ fontWeight: 500, mb: 1 }}>
+        Assigned Users
+      </Typography>
+      <Paper variant="outlined" sx={{ borderRadius: 2, mb: 3 }}>
+        <List>
+          {task.assignedTo && task.assignedTo.length > 0 ? (
+            task.assignedTo.map((user) => (
+              <ListItem key={user._id}>
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: "primary.main" }}>{user.name.charAt(0).toUpperCase()}</Avatar>
+                </ListItemAvatar>
+                <ListItemText primary={user.name} secondary={user.email} />
+              </ListItem>
+            ))
+          ) : (
+            <ListItem>
+              <ListItemText primary="No individual users assigned." />
+            </ListItem>
+          )}
+        </List>
+      </Paper>
+
+      <Typography variant="h6" sx={{ fontWeight: 500, mb: 1 }}>
+        Assigned Teams
+      </Typography>
+      <Paper variant="outlined" sx={{ borderRadius: 2 }}>
+        <List>
+          {task.teams && task.teams.length > 0 ? (
+            task.teams.map((team) => (
+              <ListItem key={team._id}>
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: "primary.light" }}>{team.name.charAt(0).toUpperCase()}</Avatar>
+                </ListItemAvatar>
+                <ListItemText primary={team.name} />
+              </ListItem>
+            ))
+          ) : (
+            <ListItem>
+              <ListItemText primary="No teams assigned." />
+            </ListItem>
+          )}
+        </List>
+      </Paper>
+    </Box>
+  )
+}
+
+export default TaskDetail

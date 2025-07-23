@@ -1,13 +1,101 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+    "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+/* FullCalendar Overrides */
+.fc .fc-button {
+  font-family: "Inter", sans-serif !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  border-radius: 8px !important;
+}
+
+.fc .fc-button-primary {
+  background-color: #1a73e8 !important;
+  border-color: #1a73e8 !important;
+}
+
+.fc .fc-button-primary:hover {
+  background-color: #1557b0 !important;
+  border-color: #1557b0 !important;
+}
+
+.fc .fc-button-primary:disabled {
+  background-color: rgba(26, 115, 232, 0.5) !important;
+  border-color: rgba(26, 115, 232, 0.5) !important;
+}
+
+.fc .fc-today-button {
+  background-color: transparent !important;
+  border-color: #e8eaed !important;
+  color: #202124 !important;
+}
+
+.fc .fc-today-button:hover {
+  background-color: rgba(60, 64, 67, 0.08) !important;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+  background-color: rgba(26, 115, 232, 0.08) !important;
+}
+
+.fc .fc-col-header-cell {
+  background-color: #f8f9fa !important;
+  font-weight: 500 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.fc .fc-event {
+  border-radius: 6px !important;
+  border: none !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+}
+
+/* Dark mode overrides */
+.dark-mode .fc .fc-today-button {
+  color: #f0f6fc !important;
+  border-color: #30363d !important;
+}
+
+.dark-mode .fc .fc-col-header-cell {
+  background-color: #21262d !important;
+}
+
+.dark-mode .fc .fc-daygrid-day.fc-day-today {
+  background-color: rgba(138, 180, 248, 0.08) !important;
+}
+
+/* Transitions */
+.fade-enter {
+  opacity: 0;
+}
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 200ms;
+}
+.fade-exit {
+  opacity: 1;
+}
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 200ms;
 }
