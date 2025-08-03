@@ -49,8 +49,8 @@ const TaskList = ({ onTaskClick }) => {
       try {
         const config = { headers: { Authorization: `Bearer ${token}` } }
         const [tasksRes, teamsRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/tasks", config),
-          axios.get("http://localhost:5000/api/teams", config),
+          axios.get("${process.env.REACT_APP_API_URL}/api/tasks", config),
+          axios.get("${process.env.REACT_APP_API_URL}/api/teams", config),
         ])
         setTasks(tasksRes.data)
         setAllTeams(teamsRes.data)
@@ -67,7 +67,7 @@ const TaskList = ({ onTaskClick }) => {
     e.stopPropagation()
     if (window.confirm("Are you sure you want to delete this task?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/tasks/${taskId}`, {
+        await axios.delete(`${process.env.REACT_APP_API_URL}/api/tasks/${taskId}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         setTasks(tasks.filter((task) => task._id !== taskId))
@@ -81,7 +81,7 @@ const TaskList = ({ onTaskClick }) => {
     e.stopPropagation()
     try {
       const { data } = await axios.put(
-        `http://localhost:5000/api/tasks/${taskId}`,
+        `${process.env.REACT_APP_API_URL}/api/tasks/${taskId}`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } },
       )

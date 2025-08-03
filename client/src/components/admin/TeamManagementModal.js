@@ -59,7 +59,7 @@ const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } }
       const { data } = await axios.post(
-        `http://localhost:5000/api/teams/${currentTeam._id}/members`,
+        `${process.env.REACT_APP_API_URL}/api/teams/${currentTeam._id}/members`,
         { userId: userToAdd },
         config,
       )
@@ -75,7 +75,7 @@ const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
     if (window.confirm("Are you sure you want to remove this member?")) {
       try {
         const config = { headers: { Authorization: `Bearer ${token}` } }
-        await axios.delete(`http://localhost:5000/api/teams/${currentTeam._id}/members/${memberId}`, config)
+        await axios.delete(`${process.env.REACT_APP_API_URL}/api/teams/${currentTeam._id}/members/${memberId}`, config)
 
         const updatedMembers = currentTeam.members.filter((m) => m._id !== memberId)
         const newLeaderId =
@@ -94,7 +94,7 @@ const TeamManagementModal = ({ open, onClose, team, allUsers }) => {
     setLeaderToSet(newLeaderId)
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } }
-      await axios.put(`http://localhost:5000/api/teams/${currentTeam._id}/leader`, { userId: newLeaderId }, config)
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/teams/${currentTeam._id}/leader`, { userId: newLeaderId }, config)
     } catch (error) {
       alert(error.response?.data?.message || "Failed to set leader")
     }

@@ -34,7 +34,7 @@ const NotificationBell = () => {
       if (!token) return
       const config = { headers: { Authorization: `Bearer ${token}` } }
       try {
-        const { data } = await axios.get("http://localhost:5000/api/notifications", config)
+        const { data } = await axios.get("${process.env.REACT_APP_API_URL}/api/notifications", config)
         setNotifications(data)
       } catch (error) {
         console.error("Failed to fetch notifications:", error)
@@ -59,7 +59,7 @@ const NotificationBell = () => {
   const markAsRead = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } }
-      await axios.put("http://localhost:5000/api/notifications/mark-read", {}, config)
+      await axios.put("${process.env.REACT_APP_API_URL}/api/notifications/mark-read", {}, config)
       setNotifications(notifications.map((n) => ({ ...n, read: true })))
     } catch (error) {
       console.error("Failed to mark notifications as read:", error)
@@ -69,7 +69,7 @@ const NotificationBell = () => {
   const deleteNotification = async (id) => {
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } }
-      await axios.delete(`http://localhost:5000/api/notifications/${id}`, config)
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/notifications/${id}`, config)
       setNotifications(notifications.filter((n) => n._id !== id))
     } catch (error) {
       console.error("Failed to delete notification:", error)

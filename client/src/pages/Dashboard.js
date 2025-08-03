@@ -42,7 +42,7 @@ const Dashboard = () => {
       if (!token) return
       try {
         const config = { headers: { Authorization: `Bearer ${token}` } }
-        const { data } = await axios.get("http://localhost:5000/api/admin/users", config)
+        const { data } = await axios.get("${process.env.REACT_APP_API_URL}/api/admin/users", config)
         setAllUsers(data)
       } catch (error) {
         console.error("Failed to fetch all users:", error)

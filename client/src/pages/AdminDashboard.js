@@ -40,7 +40,7 @@ const AdminDashboard = () => {
     if (!token) return
     const config = { headers: { Authorization: `Bearer ${token}` } }
     try {
-      const { data } = await axios.get("http://localhost:5000/api/admin/users", config)
+      const { data } = await axios.get("${process.env.REACT_APP_API_URL}/api/admin/users", config)
       setAllUsers(data.filter((u) => u.role === "user"))
     } catch (error) {
       console.error("Failed to fetch users:", error)
@@ -60,7 +60,7 @@ const AdminDashboard = () => {
     const config = { headers: { Authorization: `Bearer ${token}` } }
     try {
       await axios.post(
-        "http://localhost:5000/api/teams",
+        "${process.env.REACT_APP_API_URL}/api/teams",
         {
           name: newTeamName,
           members: selectedUsers,

@@ -26,8 +26,8 @@ const TeamManagement = ({ key: refreshKey }) => {
     const config = { headers: { Authorization: `Bearer ${token}` } }
     try {
       const [teamsRes, usersRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/admin/teams", config),
-        axios.get("http://localhost:5000/api/admin/users", config),
+        axios.get("${process.env.REACT_APP_API_URL}/api/admin/teams", config),
+        axios.get("${process.env.REACT_APP_API_URL}/api/admin/users", config),
       ])
       setTeams(teamsRes.data)
       setAllUsers(usersRes.data)
@@ -55,7 +55,7 @@ const TeamManagement = ({ key: refreshKey }) => {
     if (window.confirm("Are you sure you want to permanently delete this team?")) {
       try {
         const config = { headers: { Authorization: `Bearer ${token}` } }
-        await axios.delete(`http://localhost:5000/api/teams/${teamId}`, config)
+        await axios.delete(`${process.env.REACT_APP_API_URL}/api/teams/${teamId}`, config)
         alert("Team deleted successfully.")
         fetchData()
       } catch (error) {

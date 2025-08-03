@@ -23,7 +23,7 @@ const UserManagement = ({ key: refreshKey }) => {
     if (!token) return
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } }
-      const { data } = await axios.get("http://localhost:5000/api/admin/users", config)
+      const { data } = await axios.get("${process.env.REACT_APP_API_URL}/api/admin/users", config)
       setUsers(data)
     } catch (error) {
       console.error("Failed to fetch users:", error)
@@ -48,7 +48,7 @@ const UserManagement = ({ key: refreshKey }) => {
   const handleRoleChange = async (userId, newRole) => {
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } }
-      await axios.put(`http://localhost:5000/api/admin/users/${userId}/role`, { role: newRole }, config)
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/admin/users/${userId}/role`, { role: newRole }, config)
       fetchUsers()
     } catch (error) {
       alert("Failed to update role.")
