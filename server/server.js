@@ -19,7 +19,7 @@ const app = express();
 const server = http.createServer(app);
 
 const corsOptions = {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: process.env.CLIENT_URL || "${process.env.REACT_APP_API_URL}",
     methods: ["GET", "POST", "PUT", "DELETE"]
 };
 
