@@ -20,7 +20,7 @@ const TaskCalendar = ({ onTaskClick, refreshTrigger }) => {
       if (!token) return
       try {
         const config = { headers: { Authorization: `Bearer ${token}` } }
-        const { data: tasks } = await axios.get("${process.env.REACT_APP_API_URL}/api/tasks", config)
+        const { data: tasks } = await axios.get(`${process.env.REACT_APP_API_URL}/api/tasks`, config)
 
         const calendarEvents = tasks
           .filter((task) => task.deadline)

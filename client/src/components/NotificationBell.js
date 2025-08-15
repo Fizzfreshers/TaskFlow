@@ -34,7 +34,7 @@ const NotificationBell = () => {
       if (!token) return
       const config = { headers: { Authorization: `Bearer ${token}` } }
       try {
-        const { data } = await axios.get("${process.env.REACT_APP_API_URL}/api/notifications", config)
+        const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/notifications`, config)
         setNotifications(data)
       } catch (error) {
         console.error("Failed to fetch notifications:", error)
@@ -59,7 +59,7 @@ const NotificationBell = () => {
   const markAsRead = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } }
-      await axios.put("${process.env.REACT_APP_API_URL}/api/notifications/mark-read", {}, config)
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/notifications/mark-read`, {}, config)
       setNotifications(notifications.map((n) => ({ ...n, read: true })))
     } catch (error) {
       console.error("Failed to mark notifications as read:", error)

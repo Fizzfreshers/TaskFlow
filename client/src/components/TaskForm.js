@@ -44,8 +44,8 @@ const TaskForm = ({ task, onTaskCreated, onTaskUpdated }) => {
       const config = { headers: { Authorization: `Bearer ${token}` } }
       try {
         const [teamsRes, usersRes] = await Promise.all([
-          axios.get("${process.env.REACT_APP_API_URL}/api/teams", config),
-          axios.get("${process.env.REACT_APP_API_URL}/api/users", config),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/teams`, config),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/users`, config),
         ])
         setAllTeams(teamsRes.data)
         setAllUsers(usersRes.data)
@@ -87,7 +87,7 @@ const TaskForm = ({ task, onTaskCreated, onTaskUpdated }) => {
         await axios.put(`${process.env.REACT_APP_API_URL}/api/tasks/${task._id}`, taskData, config)
         if (onTaskUpdated) onTaskUpdated()
       } else {
-        await axios.post("${process.env.REACT_APP_API_URL}/api/tasks", taskData, config)
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/tasks`, taskData, config)
         if (onTaskCreated) onTaskCreated()
       }
     } catch (error) {

@@ -40,7 +40,7 @@ const TeamList = ({ onManageTeam, onTeamAction }) => {
       setLoading(true)
       try {
         const config = { headers: { Authorization: `Bearer ${token}` } }
-        const { data } = await axios.get("${process.env.REACT_APP_API_URL}/api/teams", config)
+        const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/teams`, config)
         setTeams(data)
         // Auto-expand first team
         if (data.length > 0) {

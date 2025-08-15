@@ -35,7 +35,7 @@ const UserSidebar = () => {
     if (!token) return
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } }
-      const { data } = await axios.get("${process.env.REACT_APP_API_URL}/api/teams", config)
+      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/teams`, config)
       setTeamsWithUsers(data)
       // Auto-expand first team
       if (data.length > 0) {

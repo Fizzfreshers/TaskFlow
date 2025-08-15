@@ -49,8 +49,8 @@ const TaskList = ({ onTaskClick }) => {
       try {
         const config = { headers: { Authorization: `Bearer ${token}` } }
         const [tasksRes, teamsRes] = await Promise.all([
-          axios.get("${process.env.REACT_APP_API_URL}/api/tasks", config),
-          axios.get("${process.env.REACT_APP_API_URL}/api/teams", config),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/tasks`, config),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/teams`, config),
         ])
         setTasks(tasksRes.data)
         setAllTeams(teamsRes.data)
