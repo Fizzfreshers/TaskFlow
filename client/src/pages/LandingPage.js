@@ -32,6 +32,8 @@ import {
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
 } from "@mui/icons-material"
+import { useTheme } from "../context/ThemeContext";
+
 
 // Technology logos as SVG components
 const ReactLogo = () => (
@@ -72,7 +74,7 @@ const MUILogo = () => (
 
 const LandingPage = () => {
   const theme = useTheme()
-  const [isDarkMode, setIsDarkMode] = useState(false)
+  const { isDarkMode, toggleDarkMode } = useTheme();
   const [isVisible, setIsVisible] = useState({})
 
   useEffect(() => {
@@ -241,7 +243,7 @@ const LandingPage = () => {
               TaskFlow
             </Typography>
           </Box>
-          <IconButton onClick={() => setIsDarkMode(!isDarkMode)} sx={{ color: "text.secondary" }}>
+          <IconButton onClick={toggleDarkMode} sx={{ color: "text.secondary" }}>
             {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
           </IconButton>
           <Button

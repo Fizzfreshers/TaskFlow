@@ -209,16 +209,7 @@ const TeamManagement = ({ key: refreshKey }) => {
         <Typography variant="h6" sx={{ fontWeight: 500 }}>
           Team Management
         </Typography>
-        <Button
-          variant="outlined"
-          startIcon={<AddIcon />}
-          sx={{
-            borderRadius: 2,
-            textTransform: "none",
-          }}
-        >
-          New Team
-        </Button>
+        <Button variant="primary" onClick={() => handleOpenModal()}> New Team </Button>
       </Box>
 
       <Paper
