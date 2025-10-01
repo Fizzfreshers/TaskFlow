@@ -32,7 +32,7 @@ import {
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
 } from "@mui/icons-material"
-import { useTheme } from "../context/ThemeContext";
+import { useTheme as useThemeContext } from "../context/ThemeContext";
 
 
 // Technology logos as SVG components
@@ -74,7 +74,7 @@ const MUILogo = () => (
 
 const LandingPage = () => {
   const theme = useTheme()
-  const { isDarkMode, toggleDarkMode } = useTheme();
+  const { isDarkMode, toggleDarkMode } = useThemeContext();
   const [isVisible, setIsVisible] = useState({})
 
   useEffect(() => {
